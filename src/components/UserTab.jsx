@@ -1,0 +1,142 @@
+import React, { useEffect, useState } from 'react'
+import Tab from '@mui/material/Tab';
+import TabContext from '@mui/lab/TabContext';
+import TabList from '@mui/lab/TabList';
+import TabPanel from '@mui/lab/TabPanel';
+import { Avatar, Box, Divider, IconButton, List, ListItem, ListItemAvatar, ListItemButton, ListItemText, Tooltip, Typography } from '@mui/material';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+
+
+import { PUBLIC_URL } from '../PUBLIC_URL';
+
+// ALl friends of the user
+async function getAllFriends(ID) {
+    const endpoint = `${PUBLIC_URL}/user/${ID}/friends`;
+    console.log(ID);
+    let res = await fetch(endpoint, {
+        method: "GET",
+        headers: {
+            'Content-type': 'application/json'
+        }
+    });
+
+    res = await res.json();
+
+    // console.log("user friends: " + res);
+
+    return res;
+
+}
+
+
+function UserTab(props) {
+    const [value, setValue] = useState('1');
+    const [friends, setFriends] = useState(null);
+
+    const handleChange = (event, newValue) => {
+        setValue(newValue);
+    };
+
+    // console.log(friends?.followers)
+
+    useEffect(() => {
+        if (!friends) {
+            getAllFriends(props?.userID)
+                .then(data => setFriends(data))
+                .catch(err => console.log(err));
+        }
+
+    }, [friends])
+
+    return (
+        <div>
+            <Box sx={{ width: '100%', typography: 'body1' }}>
+                <TabContext value={value}>
+                    <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                        <TabList variant="fullWidth" onChange={handleChange} aria-label="lab API tabs example">
+
+                            <Tab icon={<FavoriteIcon />} label="Followers" value="1" />
+                            <Tab icon={<PeopleAltIcon />} label="Following" value="2" />
+
+                        </TabList>
+                    </Box>
+
+                    {/* For Followers */}
+                    <TabPanel value="1" sx={{ p: 0, width: "full" }}>
+                        {friends?.followers && friends?.followers.length !== 0  && friends?.followers[0]?.map((item, ind) => {
+
+                            return <List key={item._id} sx={{ width: '100%', bgcolor: 'background.paper' }}>
+                                <ListItem alignItems="flex-start"
+                                    disablePadding
+                                    disableGutters
+                                    secondaryAction={
+                                        <Tooltip title="View Profile" placement='left'>
+                                            <IconButton edge="start" aria-label="comments" >
+                                                <VisibilityIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    }
+                                >
+
+                                    <ListItemButton >
+
+                                        <ListItemAvatar>
+                                            <Avatar alt="Remy Sharp" src={item?.profilePicture} />
+                                        </ListItemAvatar>
+
+
+                                        <ListItemText primary={item?.username} />
+                                    </ListItemButton>
+
+
+                                </ListItem>
+                                
+                            </List>
+
+                        })}
+                    </TabPanel>
+
+                    {/* Followings list */}
+                    <TabPanel value="2" sx={{ p: 0, width: "full" }}>
+                        {friends?.followers && friends?.followigns.length !== 0 && friends?.followigns[0]?.map((item, ind) => {
+
+                            return <List key={item._id} sx={{ width: '100%', bgcolor: 'background.paper' }}>
+                                <ListItem alignItems="flex-start"
+                                    disablePadding
+                                    disableGutters
+                                    secondaryAction={
+                                        <Tooltip title="View Profile" placement='left'>
+                                            <IconButton edge="start" aria-label="comments">
+                                                <VisibilityIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                    }
+                                >
+
+                                    <ListItemButton >
+
+                                        <ListItemAvatar>
+                                            <Avatar alt="Remy Sharp" src={item?.profilePicture} />
+                                        </ListItemAvatar>
+
+
+                                        <ListItemText primary={item?.username} />
+                                    </ListItemButton>
+
+
+                                </ListItem>
+                                
+                            </List>
+
+                        })}
+                    </TabPanel>
+
+                </TabContext>
+            </Box>
+        </div>
+    )
+}
+
+export default UserTab
