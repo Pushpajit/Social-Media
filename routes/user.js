@@ -22,10 +22,10 @@ route.put("/:id", async (req, res) => {
                 $set: req.body
             });
 
-            res.status(202).json({ status: "User updated!" });
+            res.status(202).json({ status: "User updated!", user: user });
 
         } catch (err) {
-
+            console.log(err);
             res.status(403).json({ status: "Update failed!", err: err });
         }
 
