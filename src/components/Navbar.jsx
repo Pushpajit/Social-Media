@@ -1,4 +1,4 @@
-import { AppBar, Avatar, Badge, Box, IconButton, InputBase, Menu, MenuItem, Typography, useMediaQuery } from '@mui/material'
+import { AppBar, Avatar, Badge, Box, IconButton, InputBase, Menu, MenuItem, Tooltip, Typography, useMediaQuery } from '@mui/material'
 import SearchIcon from '@mui/icons-material/Search';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import HubIcon from '@mui/icons-material/Hub';
@@ -7,7 +7,7 @@ import { useTheme } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import ProfilePic from '../assets/avatar-1577909_1280.webp'
-import Account from './Account';
+
 
 
 
@@ -17,19 +17,17 @@ function Appbar({ toggleDrawer }) {
   const theme = useTheme();
   const isMedium = useMediaQuery(theme.breakpoints.down("sm"));
   const [anchorElUser, setAnchorElUser] = useState(null); // For toggling menu.
-  const [openModal, setOpenModal] = React.useState(false);
   const [user, setuser] = useState(null);
-  const handleOpen = () => setOpenModal(true);
-  const handleClose = () => setOpenModal(false);
+
 
   const navigate = useNavigate();
-  
+
 
   // console.log(user);
 
   useEffect(() => {
     const data = JSON.parse(localStorage.getItem("user"));
-    if(!user)
+    if (!user)
       setuser(data);
   }, [user])
 
@@ -41,6 +39,7 @@ function Appbar({ toggleDrawer }) {
   const handleCloseUserMenu = (e) => {
     setAnchorElUser(null);
   };
+
 
   const handleProfileNavigate = () => {
     navigate(`/profile/${user?._id}`);
@@ -60,11 +59,7 @@ function Appbar({ toggleDrawer }) {
     setAnchorElUser(null);
   }
 
-  // Open Account modal
-  const handleAccount = () => {
-    handleOpen(true);
-    handleCloseUserMenu();
-  }
+  
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -83,14 +78,14 @@ function Appbar({ toggleDrawer }) {
 
 
         {/* search bar */}
-        <div className='border border-red flex bg-slate-100 text-black items-center justify-center space-x-2 pl-1 rounded-lg'>
+        <Box className='border border-red flex  items-center justify-center space-x-2 pl-1 rounded-lg' bgcolor={"background.default"} color={"text.primary"} >
           <SearchIcon />
           <InputBase
             placeholder={isMedium ? 'Search' : 'Search for friend, post or video'}
-            sx={{ width: { lg: 450, }, paddingRight: 2 }}
+            sx={{ width: { lg: 450, }, paddingRight: 2}}
           >
           </InputBase>
-        </div>
+        </Box>
 
 
         {/* Router */}
@@ -125,9 +120,11 @@ function Appbar({ toggleDrawer }) {
         </div>
 
         {/* User avatar */}
-        <IconButton onClick={handleOpenUserMenu}>
-          <Avatar src={user?.profilePicture || ProfilePic} className='hover:cursor-pointer' sx={{ width: 35, height: 35 }} ></Avatar>
-        </IconButton>
+        <Tooltip title={user?.username}>
+          <IconButton onClick={handleOpenUserMenu}>
+            <Avatar src={user?.profilePicture || ProfilePic} className='hover:cursor-pointer' sx={{ width: 35, height: 35 }} ></Avatar>
+          </IconButton>
+        </Tooltip>
 
         {/* Menu for profile settings menu */}
         <Menu
@@ -148,16 +145,10 @@ function Appbar({ toggleDrawer }) {
         >
 
           <MenuItem onClick={handleProfileNavigate}>Profile</MenuItem>
-          <MenuItem onClick={handleAccount}>Account</MenuItem>
+          <MenuItem onClick={handleCloseUserMenu}>Account</MenuItem>
           <MenuItem onClick={handleCloseUserMenu}>Dashboard</MenuItem>
           <MenuItem onClick={handleLogOut}>Logout</MenuItem>
 
-          <Account
-            openModal={openModal}
-            setOpenModal={setOpenModal}
-            handleOpen={handleOpen}
-            handleClose={handleClose}
-          />
 
         </Menu>
 

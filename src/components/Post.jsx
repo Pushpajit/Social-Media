@@ -242,7 +242,7 @@ function Post(props) {
   // 
 
   return (
-    <Card sx={{ maxWidth: "100%", marginBottom: 10 }}>
+    <Card sx={{ maxWidth: "100%", marginBottom: 10 }} bgcolor={"background.default"} color={"text.primary"}>
       <CardHeader 
         avatar={
           <IconButton onClick={handleProfileView}>
@@ -284,18 +284,18 @@ function Post(props) {
 
       {props.data?.image !== "" && <CardMedia
         component="img"
-        sx={{ width: "100%", height: 450, objectFit: "cover", p: 2 }}
+        sx={{ width: "100%", height: 450, objectFit: "cover", p: 1 }}
 
         image={props.data?.image}
         alt="Image"
       />}
 
       {/* Card content */}
-      <CardContent sx={{textTransform: "none", maxWidth: "650px"}}>
+      <CardContent sx={{textTransform: "none", maxWidth: "100%", p: 1}}>
         
         {/* Markdown viewer */}
-        <div className='w-full pl-2'>
-          <MDEditor.Markdown  source={props.data?.desc} style={{ maxWidth: "100%" }} />
+        <div className='w-full'>
+          <MDEditor.Markdown  source={props.data?.desc} style={{ width: "100%", backgroundColor: "background.default"}} />
         </div>
         
       </CardContent>

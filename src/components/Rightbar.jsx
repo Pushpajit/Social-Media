@@ -92,7 +92,7 @@ function Rightbar() {
 
     //Handle profile view
     const handleProfileView = (userID) => {
-        navigate('/profile', { state: { data: userID } });
+        navigate(`/profile/${userID}`);
     }
     // 
 
@@ -106,11 +106,11 @@ function Rightbar() {
 
 
     return (
-        <Box className='space-y-5' sx={{ flex: 3, display: { xs: "none", sm: "none", md: "block" }, paddingTop: 5, paddingLeft: 2, paddingRight: 2 }}>
+        <Box className='space-y-5' bgcolor={"background.default"} color={"text.primary"} sx={{ flex: 3, display: { xs: "none", sm: "none", md: "block" }, paddingTop: 5, paddingLeft: 2, paddingRight: 2 }}>
             {/* Suggested friends */}
             <Paper sx={{ p: 1 }}>
 
-                <p className='text-slate-400 text-sm mb-5'>Suggestions for you</p>
+                <p className=' text-sm mb-5'>Suggestions for you</p>
 
                 {/* Peoples */}
                 {
@@ -124,7 +124,7 @@ function Rightbar() {
                                         <IconButton onClick={() => handleProfileView(item._id)}>
                                             <Avatar src={item?.profilePicture} sizes='small' />
                                         </IconButton>
-                                        <p onClick={() => handleProfileView(item._id)} className='font-semibold text-slate-700 text-sm hover:cursor-pointer hover:text-[#1976D2]'>{item?.username}</p>
+                                        <p onClick={() => handleProfileView(item._id)} className='font-semibold  text-sm hover:cursor-pointer hover:text-[#1976D2]'>{item?.username}</p>
                                     </div>
 
                                     <div className='flex space-x-2'>
@@ -145,7 +145,7 @@ function Rightbar() {
 
             {/* Online friends */}
             <Paper sx={{ p: 1 }}>
-                <p className='text-slate-400 text-sm mb-5'>Online friends</p>
+                <p className=' text-sm mb-5'>Online friends</p>
 
                 <Box className='space-y-2 cursor-pointer'>
                     <div className='flex gap-3 items-center'>

@@ -1,46 +1,60 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
 import Feed from '../components/Feed'
 import Rightbar from '../components/Rightbar'
-import { Box } from '@mui/material'
+import { Box, createTheme } from '@mui/material'
 import SideDrawer from '../components/SideDrawer'
 import { useNavigate } from 'react-router-dom'
 
-function Home({user}) {
-  
+import { ThemeProvider } from '@emotion/react'
 
-    const [open, setOpen] = useState(false);
+function Home({ user }) {
 
-    const toggleDrawer = (open) => (event) => {
-        if (
-          event &&
-          event.type === 'keydown' &&
-          (event.key === 'Tab' || event.key === 'Shift')
-        ) {
-          return;
-        }
-    
-        setOpen(open);
-      };
-    
+
+  const [open, setOpen] = useState(false);
+  const [theme, setTheme] = useState("light");
+  // const theme = useTheme();
+
+  console.log(theme);
+  useEffect(() => {
+    setTheme(JSON.parse(localStorage.getItem("theme")));
+  }, [theme])
+
+  const darkTheme = createTheme({
+    palette: {
+      mode: theme
+    }
+  })
+
+  const toggleDrawer = (open) => (event) => {
+    if (
+      event &&
+      event.type === 'keydown' &&
+      (event.key === 'Tab' || event.key === 'Shift')
+    ) {
+      return;
+    }
+
+    setOpen(open);
+  };
+
 
   return (
     <>
-      <Navbar toggleDrawer={toggleDrawer}/>
+      <ThemeProvider theme={darkTheme}>
+        <Navbar toggleDrawer={toggleDrawer} />
 
-      {/* Main */}
-      <Box sx={{marginTop: 8, display: "flex"}}>
-        <Sidebar/>
-        <SideDrawer open={open} toggleDrawer={toggleDrawer}/>
-        
-        <Feed />
-        <Rightbar />
+        {/* Main */}
+        <Box sx={{ marginTop: 8, display: "flex" }} bgcolor={"background.default"} color={"text.primary"}>
+          <Sidebar setTheme={setTheme} theme={theme}/>
+          <SideDrawer open={open} toggleDrawer={toggleDrawer} />
 
-        <div  className='mb-[80%]'>
+          <Feed />
+          <Rightbar />
 
-        </div>
-      </Box>
+        </Box>
+      </ThemeProvider>
     </>
   )
 }

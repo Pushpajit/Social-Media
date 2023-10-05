@@ -10,11 +10,12 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 
 
 import { PUBLIC_URL } from '../PUBLIC_URL';
+import { useNavigate } from 'react-router-dom';
 
 // ALl friends of the user
 async function getAllFriends(ID) {
     const endpoint = `${PUBLIC_URL}/user/${ID}/friends`;
-    console.log(ID);
+    // console.log(ID);
     let res = await fetch(endpoint, {
         method: "GET",
         headers: {
@@ -33,22 +34,25 @@ async function getAllFriends(ID) {
 
 function UserTab(props) {
     const [value, setValue] = useState('1');
-    const [friends, setFriends] = useState(null);
+    const [friends, setFriends] = useState([]);
+    const navigate = useNavigate();
+
+    // console.log(props.friends);
+
+    
 
     const handleChange = (event, newValue) => {
         setValue(newValue);
     };
 
-    // console.log(friends?.followers)
+    // console.log(props.friends)
 
-    useEffect(() => {
-        if (!friends) {
-            getAllFriends(props?.userID)
-                .then(data => setFriends(data))
-                .catch(err => console.log(err));
-        }
+     //Handle profile view
+     const handleProfileView = (userID) => {
+        navigate(`/profile/${userID}`);
+    }
+    //
 
-    }, [friends])
 
     return (
         <div>
@@ -65,15 +69,15 @@ function UserTab(props) {
 
                     {/* For Followers */}
                     <TabPanel value="1" sx={{ p: 0, width: "full" }}>
-                        {friends?.followers && friends?.followers.length !== 0  && friends?.followers[0]?.map((item, ind) => {
-
+                        {props.friends?.followers.map((item, ind) => {
+                            console.log(item[0]);
                             return <List key={item._id} sx={{ width: '100%', bgcolor: 'background.paper' }}>
                                 <ListItem alignItems="flex-start"
                                     disablePadding
                                     disableGutters
                                     secondaryAction={
                                         <Tooltip title="View Profile" placement='left'>
-                                            <IconButton edge="start" aria-label="comments" >
+                                            <IconButton onClick={(e) => handleProfileView(item[0]._id)} edge="start" aria-label="comments" >
                                                 <VisibilityIcon />
                                             </IconButton>
                                         </Tooltip>
@@ -83,16 +87,16 @@ function UserTab(props) {
                                     <ListItemButton >
 
                                         <ListItemAvatar>
-                                            <Avatar alt="Remy Sharp" src={item?.profilePicture} />
+                                            <Avatar alt="Remy Sharp" src={item[0]?.profilePicture} />
                                         </ListItemAvatar>
 
 
-                                        <ListItemText primary={item?.username} />
+                                        <ListItemText primary={item[0]?.username} />
                                     </ListItemButton>
 
 
                                 </ListItem>
-                                
+
                             </List>
 
                         })}
@@ -100,7 +104,7 @@ function UserTab(props) {
 
                     {/* Followings list */}
                     <TabPanel value="2" sx={{ p: 0, width: "full" }}>
-                        {friends?.followers && friends?.followigns.length !== 0 && friends?.followigns[0]?.map((item, ind) => {
+                        {props.friends?.followers && props.friends?.followigns.length !== 0 && props.friends?.followigns[0]?.map((item, ind) => {
 
                             return <List key={item._id} sx={{ width: '100%', bgcolor: 'background.paper' }}>
                                 <ListItem alignItems="flex-start"
@@ -108,7 +112,7 @@ function UserTab(props) {
                                     disableGutters
                                     secondaryAction={
                                         <Tooltip title="View Profile" placement='left'>
-                                            <IconButton edge="start" aria-label="comments">
+                                            <IconButton onClick={(e) => handleProfileView(item._id)} edge="start" aria-label="comments">
                                                 <VisibilityIcon />
                                             </IconButton>
                                         </Tooltip>
@@ -127,7 +131,7 @@ function UserTab(props) {
 
 
                                 </ListItem>
-                                
+
                             </List>
 
                         })}

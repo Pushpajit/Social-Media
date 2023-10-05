@@ -8,10 +8,10 @@ import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import SendIcon from '@mui/icons-material/Send';
 import React, { useEffect, useState } from 'react'
 import EmojiPicker from 'emoji-picker-react';
+import { useTheme } from '@mui/material/styles';
 
 import { PUBLIC_URL } from '../PUBLIC_URL';
 
-import ReactQuill from 'react-quill';
 import MDEditor from '@uiw/react-md-editor';
 
 import 'react-quill/dist/quill.snow.css';
@@ -44,6 +44,7 @@ async function createPost(desc, image) {
   const endpoint = `${PUBLIC_URL}/post/` + user._id;
   const payload = {
     username: user.username,
+    profilePicture: user.profilePicture,
     userID: user._id,
     desc: desc,
     image: image || ""
@@ -82,6 +83,7 @@ function Share(props) {
   const [filename, setFilename] = useState("");
   const [uploadButton, setuploadButton] = useState(false);
   const [user, setuser] = useState(null);
+  const themeProvided = useTheme();
   // Rich text editor
   const [content, setContent] = useState("");
   // 
@@ -186,10 +188,8 @@ function Share(props) {
   // 
 
   // Setting the EDMarkdown editor theme light
-  document.documentElement.setAttribute('data-color-mode', 'light');
+  document.documentElement.setAttribute('data-color-mode', themeProvided.palette.mode);
 
-  // Testing the content
-  // console.log(content);
 
   return (
     <div>
@@ -200,20 +200,11 @@ function Share(props) {
           {/* Text Editor */}
           {/* <TextField onChange={(e) => {console.log(e.target.value); setCaption(e.target.value)}} value={caption} size='small' sx={{ width: { xs: "100%" }, textTransform: "none" }} inputProps={{autoCorrect: 'off'}} fullWidth multiline placeholder='Share a post'></TextField> */}
           <div className='w-full'>
-            {/* <ReactQuill
-        
-              theme="snow"
-              value={content}
-              onChange={setContent}
-              modules={modules}
-              formats={formats}
-              placeholder="What's on your mind?"
-              
-            >
-            </ReactQuill> */}
+            
             <MDEditor
               value={content}
               onChange={setContent}
+              style={{height: 50}}
             />
             
           </div>
@@ -232,31 +223,31 @@ function Share(props) {
 
           <div className='flex sm:gap-5 justify-between sm:ml-16 ml-12 p-2'>
             {!image ? <Button onClick={openFileManager} size='large' color='success' startIcon={<PhotoLibraryIcon />}>
-              <p className='font-bold text-[13px] text-black hidden sm:block'>Image</p>
+              <p className='font-bold text-[13px]  hidden sm:block'>Image</p>
               <input className='hidden' type="file" name="file1" id="file1" onChange={onImageChange} />
             </Button> :
               <div className='flex'>
 
                 {upload && <Button disabled={uploadButton} onClick={handleUpload} size='large' color='success' startIcon={<CloudUploadIcon />}>
-                  <p className='font-bold text-[13px] text-black hidden sm:block'>Upload</p>
+                  <p className='font-bold text-[13px]  hidden sm:block'>Upload</p>
                 </Button>}
 
                 <Button onClick={handleDelete} size='large' color='error' startIcon={<DeleteForeverIcon />}>
-                  <p className='font-bold text-[13px] text-black hidden sm:block'>Delete</p>
+                  <p className='font-bold text-[13px]  hidden sm:block'>Delete</p>
                 </Button>
               </div>
             }
 
             <Button size='large' color='primary' startIcon={<LocalOfferIcon />}>
-              <p className='font-bold text-[13px] text-black hidden sm:block'>Tag</p>
+              <p className='font-bold text-[13px]  hidden sm:block'>Tag</p>
             </Button>
 
             <Button size='large' color='secondary' startIcon={<PlaceIcon />}>
-              <p className='font-bold text-[13px] text-black hidden sm:block'>Location</p>
+              <p className='font-bold text-[13px]  hidden sm:block'>Location</p>
             </Button>
 
             <Button onClick={handleOpenPop} size='large' color='warning' startIcon={<EmojiEmotionsIcon />}>
-              <p className='font-bold text-[13px] text-black hidden sm:block'>Feeling</p>
+              <p className='font-bold text-[13px]  hidden sm:block'>Feeling</p>
 
               <Popover
                 id={id}
@@ -281,7 +272,7 @@ function Share(props) {
 
           <div className='p-2'>
             <Button disabled={upload ? true : false} onClick={handlePost} size='medium' variant='contained' startIcon={<SendIcon />}>
-              <p className='font-bold text-[13px] text-white'>Post</p>
+              <p className='font-bold text-[13px]'>Post</p>
             </Button>
           </div>
 

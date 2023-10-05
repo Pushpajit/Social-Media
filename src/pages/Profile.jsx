@@ -2,17 +2,20 @@
 import React, { useEffect, useState } from 'react'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
-import { Box, Button, Paper } from '@mui/material'
+import { Box, Button, Paper, ThemeProvider, createTheme } from '@mui/material'
 import SideDrawer from '../components/SideDrawer'
 import ClearIcon from '@mui/icons-material/Clear';
 import AddIcon from '@mui/icons-material/Add';
+import SettingsIcon from '@mui/icons-material/Settings';
 import CoverPic from '../assets/adrien-olichon-ilVYjf0J378-unsplash.jpg';
 import Share from '../components/Share'
 import ProfilePic from '../assets/avatar-1577909_1280.webp'
 import Post from '../components/Post'
 import { PUBLIC_URL } from '../PUBLIC_URL';
-import { useLocation, useParams } from 'react-router-dom'
+import {  useParams } from 'react-router-dom'
 import UserTab from '../components/UserTab'
+import Account from '../components/Account'
+import { useTheme } from '@mui/material/styles';
 
 
 // Get all posts of the user.
@@ -87,7 +90,7 @@ async function getAllFriends(ID) {
 
   res = await res.json();
 
-  // console.log("user friend: " + res);
+  console.log("user friend: " + res);
 
   return res;
 
@@ -97,28 +100,78 @@ async function getAllFriends(ID) {
 function Profile() {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [data, setData] = useState([]); // data means posts of the user.
+  const [data, setData] = useState([]); 
+  const [friends, setFriends] = useState(null);
 
-  const location = useLocation(); // Import useLocation from react-router-dom
+  const themeProvided = useTheme();
+
+  // Dark theme
+  const [theme, setTheme] = useState(themeProvided.palette.mode);
+  // const theme = useTheme();
+
+  const darkTheme = createTheme({
+    palette: {
+      mode: theme
+    }
+  })
+
   const params = useParams();
   const receivedData = params.id || '';
 
 
+  // Edit info modal
+  const [openModal, setOpenModal] = React.useState(false);
+  const [anchorElUser, setAnchorElUser] = useState(null); 
+
+  const handleOpen = () => setOpenModal(true);
+  const handleClose = () => setOpenModal(false);
+
+  // Open Account modal
+  const handleAccount = () => {
+    handleOpen(true);
+    handleCloseUserMenu();
+  }
+
+  const handleCloseUserMenu = (e) => {
+    setAnchorElUser(null);
+  };
+
+  
+
+  // 
 
   // console.log("receivedData: ", receivedData);
-  // console.log(currentUser);
+  
 
   
 
   useEffect(() => {
     console.count("Render Count");
+    setTheme(JSON.parse(localStorage.getItem("theme")));
 
     async function initUser() {
+
+      // When the component is rendered and grab the user details for the first time.
       if (!user && receivedData) {
-        const data = await getUser(receivedData);
-        // console.log("user: ", data);
+        const user = await getUser(receivedData);
+        const posts = await getUserPosts(receivedData);
+        const userFriends = await getAllFriends(receivedData);
+        console.log("After fetching user details");
         
-        setUser(data);
+        setUser(user);
+        setData(posts.reverse());
+        setFriends(userFriends);
+
+      // When we dynamically changed the routes for the new user.
+      }else if(user?._id !== receivedData){
+        const user = await getUser(receivedData);
+        const posts = await getUserPosts(receivedData);
+        const userFriends = await getAllFriends(receivedData);
+        console.log("After fetching new user details");
+        
+        setUser(user);
+        setData(posts.reverse());
+        setFriends(userFriends);
       }
 
     } initUser()
@@ -131,7 +184,7 @@ function Profile() {
     }
 
 
-  }, [data, user])
+  }, [data, user, receivedData])
 
   const toggleDrawer = (open) => (event) => {
     if (
@@ -149,20 +202,26 @@ function Profile() {
   // Handle follow user
   const handleFollowUser = async () => {
     await followUser(user?._id);
+    const userFriends = await getAllFriends(receivedData);
+    setFriends(userFriends);
     setUser(null);
   }
 
+
+  // console.log(friends);
+
   return (
     <>
-      <Navbar toggleDrawer={toggleDrawer} />
+    <ThemeProvider theme={darkTheme}>
+      <Navbar toggleDrawer={toggleDrawer} bgcolor={"background.default"} color={"text.primary"}/>
 
       {/* Main */}
-      <Box sx={{ marginTop: 8 }}>
-        <Sidebar />
+      <Box sx={{ marginTop: 8 }} bgcolor={"background.default"} color={"text.primary"}>
+        <Sidebar theme={theme} setTheme={setTheme} />
         <SideDrawer open={open} toggleDrawer={toggleDrawer} />
 
         {/* Profile Pic and Cover pic and Name */}
-        <Box sx={{ flex: { lg: 6, sm: 10, md: 10 }, flexGrow: { xs: 1 }, marginLeft: { lg: "40vh" }, height: "calc(100vh - 64px)", p: { lg: 0, xs: 0, sm: 0 }, placeItems: "center" }}>
+        <Box bgcolor={"background.default"} color={"text.primary"} sx={{ flex: { lg: 6, sm: 10, md: 10 }, flexGrow: { xs: 1 }, marginLeft: { lg: "38vh" }, height: "calc(100vh - 64px)", p: { lg: 0, xs: 0, sm: 0 }, placeItems: "center" }}>
 
           <div className='relative'>
             <div >
@@ -176,14 +235,17 @@ function Profile() {
           </div>
 
           <div className='mt-20 text-center'>
-            <p className='text-xl font-bold text-slate-700'>{user?.username}</p>
-            <p className='text-sm font-semibold text-slate-500'>{user?.desc}</p>
+            <p className='text-xl font-bold' style={{color: "text.primary"}}>{user?.username}</p>
+            <p className='text-sm font-semibold ' style={{color: "text.primary"}}>{user?.desc}</p>
+
+            {receivedData === JSON.parse(localStorage.getItem("user"))?._id
+             && <Button onClick={handleAccount} startIcon={<SettingsIcon />} className='float-right' variant='contained'  size='small' sx={{marginRight: 1}}>Edit info</Button>}
           </div>
 
 
-          <Box sx={{ display: "flex", marginTop: { xs: 5, md: 5 }, marginLeft: { md: 2 }, gap: 4, p: { xs: 1 } }}>
+          <Box bgcolor={"background.default"} color={"text.primary"} sx={{ display: "flex", marginTop: { xs: 5, md: 5 }, marginLeft: { md: 2 }, gap: 4, p: { xs: 1 } }}>
             {/* User feed */}
-            <Box sx={{ flex: 1.5 }}>
+            <Box sx={{ flex: 1.5 }} bgcolor={"background.default"} color={"text.primary"}>
               {JSON.parse(localStorage.getItem("user"))?._id === user?._id && <Share setData={setData} />}
 
               {/* All posts of an user */}
@@ -198,7 +260,7 @@ function Profile() {
               <Paper square={false} sx={{ p: 2 }}>
                 <div className='mb-10'>
                   <div className='flex justify-between'>
-                    <p className='text-lg font-bold text-slate-700'>User Information</p>
+                    <p className='text-lg font-bold '>User Information</p>
 
                     {receivedData !== JSON.parse(localStorage.getItem("user"))?._id &&
                       (!user?.followers.includes(JSON.parse(localStorage.getItem("user"))._id)
@@ -208,14 +270,14 @@ function Profile() {
                   </div>
 
                   <div className='space-y-1 mb-5'>
-                    <p className='font-semibold text-slate-800'>City: <span className='font-medium text-slate-500'>{user?.city}</span></p>
-                    <p className='font-semibold text-slate-800'>From: <span className='font-medium text-slate-500'>{user?.form}</span></p>
-                    <p className='font-semibold text-slate-800'>Relationship: <span className='font-medium text-slate-500'>{user?.relationship}</span></p>
+                    <p className='font-semibold '>City: <span className='font-medium '>{user?.city}</span></p>
+                    <p className='font-semibold '>From: <span className='font-medium '>{user?.from}</span></p>
+                    <p className='font-semibold '>Relationship: <span className='font-medium '>{user?.relationship}</span></p>
                   </div>
 
-                  <div className='flex gap-5 font-semibold text-slate-800 text-center justify-center translate-y-[80%]'>
+                  <div className='flex gap-5 font-semibold  text-center justify-center translate-y-[80%]'>
                     <div>
-                      <p>{data?.length}</p>
+                      <p>{data?.length - 1}</p>
                       <p>Posts</p>
                     </div>
 
@@ -234,9 +296,9 @@ function Profile() {
 
 
               <div className='mb-10 mt-5'>
-                <Paper sx={{ p: 1 }}>
+                <Paper sx={{ p: 1 }} >
                   
-                  <UserTab userID={receivedData}/>
+                  <UserTab userID={receivedData} friends={friends}/>
                 </Paper>
               </div>
 
@@ -245,7 +307,18 @@ function Profile() {
           </Box>
 
         </Box>
+        
+        {/* Edit Account info Modal */}
+        {user && <Account
+            user={user}
+            setUser={setUser}
+            openModal={openModal}
+            setOpenModal={setOpenModal}
+            handleOpen={handleOpen}
+            handleClose={handleClose}
+          />}
       </Box>
+    </ThemeProvider>
     </>
   )
 }

@@ -98,6 +98,7 @@ export default function SignIn({ children, setIsAuthenticated }) {
             alert("Successfully Signed In!");
             localStorage.setItem("user", JSON.stringify(user.user));
             localStorage.setItem("post", JSON.stringify(0));
+            localStorage.setItem("theme", JSON.stringify("light"));
             setIsAuthenticated(true);
             navigate("/");
             
