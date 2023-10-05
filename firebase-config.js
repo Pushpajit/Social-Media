@@ -1,14 +1,17 @@
 
 const { initializeApp } = require("firebase/app");
 const { getStorage } =  require("firebase/storage");
+const dotenv = require("dotenv");
+
+dotenv.config();
 
 const firebaseConfig = {
-  apiKey: "AIzaSyAlYhydpRFOphVvSm7DDvZ0jvf3O6phG8Q",
-  authDomain: "social-media-af11f.firebaseapp.com",
-  projectId: "social-media-af11f",
-  storageBucket: "social-media-af11f.appspot.com",
-  messagingSenderId: "1052632246192",
-  appId: "1:1052632246192:web:007ab30cf4a97555d91875"
+  apiKey: process.env.API_KEY,
+  authDomain: process.env.AUTH_DOMAIN,
+  projectId: process.env.PROJECT_ID,
+  storageBucket: process.env.STORAGE_BUCKET,
+  messagingSenderId: process.env.MESSAGING_SENDER_ID,
+  appId: process.env.APP_ID
 };
 
 // Initialize Firebase
