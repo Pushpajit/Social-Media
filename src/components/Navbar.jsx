@@ -103,7 +103,7 @@ function Appbar({ toggleDrawer }) {
         <div className='flex gap-1'>
 
           <IconButton sx={{ color: "white" }}>
-            <Badge badgeContent={1} max={99} color="error" className='hover:cursor-pointer hover:text-slate-200'>
+            <Badge badgeContent={0} max={99} color="error" className='hover:cursor-pointer hover:text-slate-200'>
               <PersonIcon />
             </Badge>
           </IconButton>
@@ -111,7 +111,7 @@ function Appbar({ toggleDrawer }) {
 
 
           <IconButton sx={{ color: "white" }}>
-            <Badge badgeContent={1000} max={99} color="error" className='hover:cursor-pointer hover:text-slate-200'>
+            <Badge badgeContent={0} max={99} color="error" className='hover:cursor-pointer hover:text-slate-200'>
               <NotificationsIcon />
             </Badge>
           </IconButton>

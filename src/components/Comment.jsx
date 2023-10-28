@@ -1,9 +1,48 @@
-import { Avatar, Box, IconButton, Typography } from '@mui/material'
+import { Avatar, Box, IconButton, Menu, MenuItem, Typography } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import React, { useEffect, useState } from 'react'
+import { PUBLIC_URL } from '../PUBLIC_URL';
+
+async function deleteComment(commentID, postID) {
+    const endpoint = `${PUBLIC_URL}/post/${postID}/comment`;
+
+    const payload = {
+        commentID: commentID
+    }
+
+    let res = await fetch(endpoint, {
+        method: "DELETE",
+        headers: {
+            'Content-type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+
+    if(res.ok){
+        alert("Comment Deleted Successfully!");
+    }else{
+        alert("Comment Delete Unsuccessfull :(");
+        console.log(res);
+    }
+}
 
 function Comment(props) {
-    
+    const [anchorEl, setAnchorEl] = React.useState(null);
+
+    const open = Boolean(anchorEl);
+    const handleClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
+
+
+    // handle delete comment
+    const handleDelete = async () => {
+        await deleteComment(props.commentID, props.postID);
+        props.refreshUser([]);
+    }
 
     return (
         <Box sx={{ marginBottom: 3 }}>
@@ -18,9 +57,31 @@ function Comment(props) {
                     </div>
                 </div>
 
-                <IconButton size='small' sx={{ float: "right" }}>
+                <IconButton onClick={handleClick} size='small' sx={{ float: "right" }}>
                     <MoreVertIcon fontSize='small' />
                 </IconButton>
+
+                <Menu
+                    id="basic-menu"
+                    anchorEl={anchorEl}
+                    open={open}
+                    onClose={handleClose}
+                    MenuListProps={{
+                        'aria-labelledby': 'basic-button',
+                    }}
+                    anchorOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                    }}
+                    transformOrigin={{
+                        vertical: 'top',
+                        horizontal: 'right',
+                    }}
+                >
+                    {JSON.parse(localStorage.getItem("user"))._id === props.userID && <MenuItem >Edit</MenuItem>}
+                    {JSON.parse(localStorage.getItem("user"))._id === props.userID && <MenuItem onClick={handleDelete} >Delete</MenuItem>}
+                    <MenuItem onClick={handleClose}>Report</MenuItem>
+                </Menu>
             </Box>
 
 

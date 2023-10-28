@@ -37,7 +37,7 @@ function UserTab(props) {
     const [friends, setFriends] = useState([]);
     const navigate = useNavigate();
 
-    // console.log(props.friends);
+    console.log(props.friends?.followers);
 
     
 
@@ -70,8 +70,8 @@ function UserTab(props) {
                     {/* For Followers */}
                     <TabPanel value="1" sx={{ p: 0, width: "full" }}>
                         {props.friends?.followers.map((item, ind) => {
-                            console.log(item[0]);
-                            return <List key={item._id} sx={{ width: '100%', bgcolor: 'background.paper' }}>
+                            
+                            return <List key={item._id} sx={{ width: '100%', bgcolor: 'background.default' }}>
                                 <ListItem alignItems="flex-start"
                                     disablePadding
                                     disableGutters
@@ -104,15 +104,15 @@ function UserTab(props) {
 
                     {/* Followings list */}
                     <TabPanel value="2" sx={{ p: 0, width: "full" }}>
-                        {props.friends?.followers && props.friends?.followigns.length !== 0 && props.friends?.followigns[0]?.map((item, ind) => {
+                        {props.friends?.followigns.map((item, ind) => {
 
-                            return <List key={item._id} sx={{ width: '100%', bgcolor: 'background.paper' }}>
+                            return <List key={item._id} sx={{ width: '100%' }}>
                                 <ListItem alignItems="flex-start"
                                     disablePadding
                                     disableGutters
                                     secondaryAction={
                                         <Tooltip title="View Profile" placement='left'>
-                                            <IconButton onClick={(e) => handleProfileView(item._id)} edge="start" aria-label="comments">
+                                            <IconButton onClick={(e) => handleProfileView(item[0]._id)} edge="start" aria-label="comments">
                                                 <VisibilityIcon />
                                             </IconButton>
                                         </Tooltip>
@@ -122,11 +122,11 @@ function UserTab(props) {
                                     <ListItemButton >
 
                                         <ListItemAvatar>
-                                            <Avatar alt="Remy Sharp" src={item?.profilePicture} />
+                                            <Avatar alt="Remy Sharp" src={item[0]?.profilePicture} />
                                         </ListItemAvatar>
 
 
-                                        <ListItemText primary={item?.username} />
+                                        <ListItemText primary={item[0]?.username} />
                                     </ListItemButton>
 
 

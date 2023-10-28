@@ -137,8 +137,9 @@ const style = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
+  bgcolor: 'background.default',
+  color: 'text.primary',
   width: 400,
-  bgcolor: 'background.paper',
   boxShadow: 24,
   p: 2,
 };
@@ -199,6 +200,7 @@ function Post(props) {
 
     setValue("");
     await makeComment(value, props.data?._id);
+    props.setData([]);
   }
 
   // Handle like and dislike post
@@ -295,7 +297,7 @@ function Post(props) {
         
         {/* Markdown viewer */}
         <div className='w-full'>
-          <MDEditor.Markdown  source={props.data?.desc} style={{ width: "100%", backgroundColor: "background.default"}} />
+          <MDEditor.Markdown  source={props.data?.desc} style={{ width: "100%"}} />
         </div>
         
       </CardContent>
@@ -350,7 +352,7 @@ function Post(props) {
           {/* All comments */}
           <Box>
             {props.data?.comment.map((item, ind) => {
-              return <Comment key={ind} username={item.username} text={item.text} />
+              return <Comment key={ind} refreshUser={props.setData} postID={props.data?._id} commentID = {item.commentID} username={item.username} text={item.text} userID = {item.userID} />
             })}
 
           </Box>
