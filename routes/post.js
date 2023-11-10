@@ -36,7 +36,7 @@ route.post("/:id", async (req, res) => {
                 // console.log(req.body);
 
                 const post = await newPost.save();
-                res.status(201).json(post);
+                res.status(201).json({ post });
 
             } catch (err) {
                 console.log(err);
@@ -73,7 +73,7 @@ route.put("/:id", async (req, res) => {
                         $set: req.body
                     });
 
-                    res.status(202).json({ status: "Post has been updated!" });
+                    res.status(202).json({ post });
 
                 } catch (err) {
                     res.status(500).json({ status: "Server error", err });
@@ -104,13 +104,13 @@ route.delete("/:id", async (req, res) => {
         if (user) {
             const post = await Post.findById(req.body.postID);
             if (post) {
-                
-                console.log(`post.userID: ${post.userID},  req.body.userID: ${ req.body.userID}`);
-                if(post.userID === req.body.userID){
+
+                console.log(`post.userID: ${post.userID},  req.body.userID: ${req.body.userID}`);
+                if (post.userID === req.body.userID) {
                     try {
-    
+
                         await Post.findByIdAndDelete(req.body.postID);
-    
+
                         // Delete from firebase storage
                         const url = getPathStorageFromUrl(post.image);
                         // console.log(url);
@@ -121,14 +121,14 @@ route.delete("/:id", async (req, res) => {
                         } catch (error) {
                             console.log("[FIREBASE]: " + error);
                         }
-                       
+
                         res.status(200).json({ status: "Post has been deleted!" });
-    
+
                     } catch (err) {
                         console.log(err);
                         res.status(500).json({ status: "Server error", err });
                     }
-                }else{
+                } else {
                     res.status(403).json({ status: "You are not autherized for post deletion" });
                 }
 
@@ -196,8 +196,8 @@ route.get("/:id", async (req, res) => {
         const post = await Post.find({ userID: req.params.id });
 
         if (post) {
-            if(post.length === 0)
-                res.status(200).json([{_id: "1kb2kjbdhh1hdnjkanskjnkzZ92"}]);
+            if (post.length === 0)
+                res.status(200).json([{ _id: "1kb2kjbdhh1hdnjkanskjnkzZ92" }]);
             else
                 res.status(200).json(post);
         } else {
@@ -208,14 +208,30 @@ route.get("/:id", async (req, res) => {
     }
 })
 
+// Get a perticular single post
+route.get("/single/:postID", async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.postID);
+
+        if (post) {
+            res.status(200).json(post);
+
+        } else {
+            res.status(404).json({ status: "Post not found!" });
+        }
+    } catch (error) {
+        res.status(500).json({ status: "Server error", error });
+    }
+})
+
 
 // Get all posts from the database.
-route.get("/", async(req, res) => {
+route.get("/", async (req, res) => {
     try {
         const allPost = await Post.find({});
-         res.status(200).json(allPost);
+        res.status(200).json(allPost);
     } catch (error) {
-        
+
     }
 })
 
@@ -258,8 +274,9 @@ route.put("/:id/comment", async (req, res) => {
                 await Post.findByIdAndUpdate(req.params.id, {
                     $push: { comment: comment }
                 });
-
-                res.status(201).json({ status: `${req.body.userID} commented on this post` });
+                // post = await Post.findById(req.params.id);
+                // res.status(201).json({ status: `${req.body.userID} commented on this post` });
+                res.status(201).json({ post });
 
             } catch (err) {
                 res.status(500).json({ status: "server error", err });
@@ -278,6 +295,7 @@ route.put("/:id/comment", async (req, res) => {
 
 // Delete comment from a post
 route.delete("/:id/comment", async (req, res) => {
+    console.log(req.body);
     try {
         const post = await Post.findById(req.params.id);
         if (post) {
@@ -285,7 +303,7 @@ route.delete("/:id/comment", async (req, res) => {
                 await Post.findByIdAndUpdate(req.params.id, {
                     $pull: { comment: { commentID: req.body.commentID } }
                 })
-                res.status(201).json({ status: `Comment deleted!` });
+                res.status(201).json({ status: `Sucessfully deleted postID ${req.params.id}`});
 
             } catch {
                 res.status(500).json({ status: "server error", err });
