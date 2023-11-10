@@ -83,7 +83,7 @@ export async function getUser(data) {
     const endpoint = `${PUBLIC_URL}/user/` + data.ID;
     const res = await axios(endpoint);
     console.log(res);
-    
+
     return res;
 }
 
@@ -177,10 +177,13 @@ export async function createPost(data) {
     const user = JSON.parse(localStorage.getItem("user"));
     const endpoint = `${PUBLIC_URL}/post/` + user._id;
 
-    const imgURL = await uploadFile(data.image);
+    let imgURL = null;
+    if (data.image) {
+        imgURL = await uploadFile(data.image);
 
-    if (!imgURL) {
-        throw new Error("Image Upload Failed!");
+        if (!imgURL) {
+            throw new Error("Image Upload Failed!");
+        }
     }
 
     const payload = {
@@ -188,13 +191,13 @@ export async function createPost(data) {
         profilePicture: user.profilePicture,
         userID: user._id,
         desc: data.desc,
-        image: imgURL.downloadURL || ""
+        image: imgURL?.downloadURL || ""
     }
 
     // console.log("payload: ", payload);
 
     let res = await axios.post(endpoint, payload);
-    console.log(res);
+    // console.log(res);
 
 
     return res;
@@ -220,7 +223,7 @@ export async function updateUserProfile(data) {
 
     const res = await axios.put(endpoint, payload);
     console.log(res);
-    if(res.status === 202 || res?.data?.user){
+    if (res.status === 202 || res?.data?.user) {
         localStorage.setItem("user", JSON.stringify(res?.data.user));
     }
     return res;
@@ -247,7 +250,7 @@ export async function updateUserCover(data) {
 
     const res = await axios.put(endpoint, payload);
     console.log(res);
-    if(res.status === 202 || res?.data?.user){
+    if (res.status === 202 || res?.data?.user) {
         localStorage.setItem("user", JSON.stringify(res?.data.user));
     }
     return res;

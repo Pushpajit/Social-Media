@@ -314,7 +314,7 @@ function Post(props) {
       />} */}
 
       <div className='flex justify-center'>
-        {props.data?.image && <Image src={props.data?.image} style={{ objectFit: "cover" }} height={500} width={"100%"} />}
+        {props.data?.image && props.data.image !== '' && <Image src={props.data?.image} style={{ objectFit: "cover" }} height={500} width={"100%"} />}
       </div>
 
       {/* Card content */}

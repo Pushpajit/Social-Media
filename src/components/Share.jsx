@@ -1,4 +1,4 @@
-import { Avatar, Button, Divider, Paper, Popover, TextField } from '@mui/material'
+import { Alert, Avatar, Button, Divider, Paper, Popover, Snackbar, TextField } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton';
 import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
@@ -39,7 +39,7 @@ function Share(props) {
       queryClient.invalidateQueries({queryKey: ['userpost', JSON.parse(localStorage.getItem("user"))._id ]});
       setContent("");
       setImage(null);
-      alert("Upload Successfull 😄");
+      handleClickSuccess();
     },
 
     onError: (err) => {
@@ -127,6 +127,22 @@ function Share(props) {
   }
   // 
 
+
+  // ********************** Snackbar success ***********************
+  const [openAlertSuccess, setOpenAlertSuccess] = useState(false);
+
+  const handleClickSuccess = () => {
+    setOpenAlertSuccess(true);
+  };
+
+  const handleCloseSuccess = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    setOpenAlertSuccess(false);
+  };
+  // *******************END*****************************************
   // Setting the EDMarkdown editor theme light
   document.documentElement.setAttribute('data-color-mode', themeProvided.palette.mode);
 
@@ -227,6 +243,13 @@ function Share(props) {
         </div>
 
       </Paper>
+
+      {/* Snakbar after successfull completion */}
+      <Snackbar open={openAlertSuccess} autoHideDuration={6000} onClose={handleCloseSuccess} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+        <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: '100%' }}>
+          Post Uploaded Successfully 🥳🎉
+        </Alert>
+      </Snackbar>
     </div>
   )
 }
