@@ -1,61 +1,30 @@
-import { Box, Button, FormControlLabel, Modal, Radio, RadioGroup, TextField } from '@mui/material';
+import {
+    Box,
+    Button,
+    FormControlLabel,
+    Modal,
+    Radio,
+    RadioGroup,
+    Snackbar,
+    TextField
+} from '@mui/material';
+
 import ProfilePic from '../assets/avatar-1577909_1280.webp'
-import React, { useState } from 'react'
-
-import { PUBLIC_URL } from '../PUBLIC_URL';
-
-async function uploadFile(image) {
-    const endpoint = `${PUBLIC_URL}/upload`;
-
-    let res = await fetch(endpoint, {
-        method: "POST",
-        body: image
-    })
-
-    // console.log(res);
-
-    if(res.status === 500){
-        alert(res.statusText);
-        return null;
-    }
-
-    res = await res.json();
-    return res?.downloadURL;
-       
-}
+import React, { useEffect, useState } from 'react'
 
 
-// update a user
-async function updateUser(userID, updateData) {
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { updateUser } from '../utils/api';
+import LoadingButton from '@mui/lab/LoadingButton';
+import CloudSyncIcon from '@mui/icons-material/CloudSync';
 
-    const endpoint = `${PUBLIC_URL}/user/${userID}/`;
 
 
-    const payload = {
-      userID: userID,
-      ...updateData
-    }
-  
-    let res = await fetch(endpoint, {
-      method: "PUT",
-      headers: {
-        'Content-type': 'application/json'
-      },
-      body: JSON.stringify(payload)
-    });
-  
-    res = await res.json();
-    // console.log(res);
+import MuiAlert from '@mui/material/Alert';
 
-    if(res?.user)
-        localStorage.setItem("user", JSON.stringify(res?.user));
-    // alert(res.status);
-
-    return true;
-  
-  }
-  
-
+const Alert = React.forwardRef(function Alert(props, ref) {
+    return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 
 const style = {
@@ -81,8 +50,20 @@ function Account(props) {
         from: props.user?.from || ""
     });
 
-    // Image controll
-    const [image, setImage] = useState(props?.user.relationship || '');
+
+    
+
+    // To fix the glitch whenever the userID is changed the Account should filled with that user's data only
+    useEffect(() => {
+        setUpdateData({
+            username: props.user?.username || "",
+            profilePicture: props.user?.profilePicture || "",
+            desc: props.user?.desc || "",
+            relationship: props.user?.relationship || "",
+            city: props.user?.city || "",
+            from: props.user?.from || ""
+        })
+    }, [props.user?._id])
 
 
     // Handle changes
@@ -100,7 +81,6 @@ function Account(props) {
 
     // Handle cancle
     const handleCancle = () => {
-        setImage(null);
         props?.handleClose();
         setUpdateData({
             username: props.user?.username || "",
@@ -114,27 +94,45 @@ function Account(props) {
 
     // 
 
-    
 
+    // ********************** Query Hooks ************************** //
+    const queryClient = useQueryClient();
+    const queryUpdate = useMutation({
+        mutationFn: updateUser,
+        onSuccess: () => {
+            // alert("Profile updated 😀");
+            handleClickSuccess();
+            queryClient.invalidateQueries({ queryKey: ["user"] });
+        },
 
+        onError: (err) => {
+            alert("Profile not updated, something went wrong 😟");
+            console.log("[UPDATE-ERROR]: ", err);
+        }
+    })
+    // ********************** END ************************** //
 
 
     // Handle update
-    const handleUpdate = async () => {
-        // console.log(updateData);
-        const result = await updateUser(props.user?._id, updateData);
-
-        if(result){
-            alert("Profile updated 😀");
-            handleCancle();
-            props.setUser(null);
-        
-        }else{
-            alert("Profile not updated, something went wrong 😟");
-            handleCancle();
-        }
+    const handleUpdate = () => {
+        props?.handleClose();
+        queryUpdate.mutate({ userID: props.user?._id, updateData: updateData });
     }
 
+
+    // Handle Alert
+    const [openAlertSuccess, setOpenAlertSuccess] = useState(false);
+    const handleClickSuccess = () => {
+        setOpenAlertSuccess(true);
+    };
+
+    const handleCloseSuccess = (event, reason) => {
+        if (reason === 'clickaway') {
+            return;
+        }
+        setOpenAlertSuccess(false);
+    };
+    //
 
 
     return (
@@ -145,11 +143,12 @@ function Account(props) {
                 aria-labelledby="modal-modal-title"
                 aria-describedby="modal-modal-description"
             >
+
                 <Box sx={style} bgcolor={"background.default"} color={"text.primary"}>
                     <p className='text-center text-2xl font-bold mb-2'>Edit Your Info</p>
 
                     <div className='items-center content-center hover:cursor-pointer mb-2'>
-                        <img className='mx-auto text-center h-[150px] w-[150px] object-cover border-[4px] border-blue-600' src={image?.bolb || updateData.profilePicture || ProfilePic} alt="profile-pic" style={{ borderRadius: "50%", }} />
+                        <img className='mx-auto text-center h-[150px] w-[150px] object-cover border-[4px] border-blue-600' src={updateData.profilePicture || ProfilePic} alt="profile-pic" style={{ borderRadius: "50%", }} />
 
                     </div>
 
@@ -175,13 +174,31 @@ function Account(props) {
                         </RadioGroup>
 
                         <div className='space-x-4 float-right'>
-                            <Button onClick={handleCancle} variant='contained' size='small'>Cancle</Button>
-                            <Button onClick={handleUpdate} variant='contained' size='small'>Update</Button>
+                            <Button disabled={queryUpdate.isPending} onClick={handleCancle} variant='outlined'>Cancle</Button>
+                            {/* <Button onClick={handleUpdate} variant='contained' >Update</Button> */}
+                            <LoadingButton
+                                loading={queryUpdate.isPending}
+                                onClick={handleUpdate}
+                                loadingPosition="start"
+                                startIcon={<CloudSyncIcon />}
+                                variant="outlined"
+
+
+                            >
+                                {queryUpdate.isPending ? "updating" : "update"}
+                            </LoadingButton>
                         </div>
                     </div>
 
                 </Box>
             </Modal>
+
+            <Snackbar open={openAlertSuccess} autoHideDuration={6000} onClose={handleCloseSuccess} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
+                <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: '100%' }}>
+                    Profile Updated Successfully 🎉
+                </Alert>
+            </Snackbar>
+
         </div>
     )
 }

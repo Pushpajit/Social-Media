@@ -7,6 +7,8 @@ import { useTheme } from '@mui/material/styles';
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom';
 import ProfilePic from '../assets/avatar-1577909_1280.webp'
+import { useQuery } from '@tanstack/react-query';
+import { getUser } from '../utils/api';
 
 
 
@@ -58,6 +60,18 @@ function Appbar({ toggleDrawer }) {
     navigate('/signin');
     setAnchorElUser(null);
   }
+
+ // ********************** Query Hooks ************************** //
+  const queryUser = useQuery({
+    queryKey: [`user`],
+    queryFn: async () => {
+      if(user)
+        return await getUser({ ID: user?._id });
+    }
+  })
+ // ********************** END *************************** //
+ 
+  // console.log(queryUser);
 
   
 
@@ -120,9 +134,9 @@ function Appbar({ toggleDrawer }) {
         </div>
 
         {/* User avatar */}
-        <Tooltip title={user?.username}>
+        <Tooltip title={queryUser.isSuccess && queryUser.data.data?.username}>
           <IconButton onClick={handleOpenUserMenu}>
-            <Avatar src={user?.profilePicture || ProfilePic} className='hover:cursor-pointer' sx={{ width: 35, height: 35 }} ></Avatar>
+            <Avatar src={queryUser.isSuccess && queryUser.data.data?.profilePicture || ProfilePic} className='hover:cursor-pointer' sx={{ width: 35, height: 35 }} ></Avatar>
           </IconButton>
         </Tooltip>
 

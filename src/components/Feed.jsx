@@ -1,46 +1,37 @@
-import { Box } from '@mui/material'
+import { Box, CircularProgress } from '@mui/material'
 import { PUBLIC_URL } from '../PUBLIC_URL';
 import Post from './Post';
 
 import Share from './Share';
 import { useEffect, useState } from 'react';
 
+import { useQuery } from '@tanstack/react-query';
 
-async function getAllPosts() {
 
-  const endpoint = `${PUBLIC_URL}/post/`;
+import { getAllPosts } from '../utils/api';
 
-  let res = await fetch(endpoint, {
-    method: "GET",
-    headers: {
-      'Content-type': 'application/json'
-    }
-  });
 
-  res = await res.json();
-  return res;
-}
 
 
 function Feed(props) {
 
   const [data, setData] = useState([]);
 
+  let Qdata = [];
+   // Queries
+  const query = useQuery({
+    queryKey: ["allPost"],
+    queryFn: getAllPosts,
+    
+  })
 
-  // console.log(data);
 
-  useEffect(() => {
-    console.count("Render Count");
+  if(query.isSuccess){
+    Qdata = [...query.data.data].reverse();
+    
+  }
 
-    if (data.length === 0) {
-      getAllPosts()
-        .then(data => setData(data.reverse()))
-        .catch(err => alert(err));
-    }
-
-    // console.log("api called!");
-
-  }, [data])
+  // console.log(Qdata);
 
   return (
     <Box bgcolor={"background.default"} color={"text.primary"} sx={{ flex: { lg: 6, sm: 10, md: 10 }, flexGrow: { xs: 1 }, marginLeft: { lg: "40vh" }, height: "100%", p: { lg: 5, xs: 0, sm: 3 }, paddingRight: { xs: 2 }, paddingLeft: { xs: 2 }, paddingTop: { xs: 2 }, placeItems: "center" }}>
@@ -48,10 +39,15 @@ function Feed(props) {
       <Share setData={setData} />
 
       {/* Post Card */}
+
+      {query.isLoading && <Box sx={{display: "flex", justifyContent: "center"}}>
+        <CircularProgress />
+      </Box>}
+
       <Box bgcolor={"background.default"} color={"text.primary"}>
-        {data.map((item, ind) => {
-          if (ind !== data.length - 1)
-            return <Post key={ind} data={item} setData={setData} />
+        {Qdata.map((item, ind) => {
+          if (ind !== Qdata.length - 1)
+            return <Post key={ind} data={item} postID ={item._id}  />
         })}
       </Box>
     </Box>

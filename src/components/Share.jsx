@@ -1,8 +1,8 @@
 import { Avatar, Button, Divider, Paper, Popover, TextField } from '@mui/material'
+import LoadingButton from '@mui/lab/LoadingButton';
 import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import PlaceIcon from '@mui/icons-material/Place';
 import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import SendIcon from '@mui/icons-material/Send';
@@ -10,85 +10,44 @@ import React, { useEffect, useState } from 'react'
 import EmojiPicker from 'emoji-picker-react';
 import { useTheme } from '@mui/material/styles';
 
-import { PUBLIC_URL } from '../PUBLIC_URL';
-
 import MDEditor from '@uiw/react-md-editor';
 
 import 'react-quill/dist/quill.snow.css';
-
-
-async function uploadFile(image) {
-  const endpoint = `${PUBLIC_URL}/upload`;
-
-  let res = await fetch(endpoint, {
-    method: "POST",
-
-    body: image
-  })
-
-
-  if (res.ok) {
-    res = await res.json();
-    // console.log(res);
-    alert("File uploaded!");
-    return res;
-  } else {
-    alert("File not uploaded!");
-    return false;
-  }
-}
-
-async function createPost(desc, image) {
-
-  const user = JSON.parse(localStorage.getItem("user"));
-  const endpoint = `${PUBLIC_URL}/post/` + user._id;
-  const payload = {
-    username: user.username,
-    profilePicture: user.profilePicture,
-    userID: user._id,
-    desc: desc,
-    image: image || ""
-  }
-
-  // console.log("payload: ", payload);
-
-  let res = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      'Content-type': 'application/json'
-    },
-
-    body: JSON.stringify(payload)
-  });
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { createPost } from '../utils/api';
 
 
 
-  if (res.ok) {
-    res = await res.json();
-    alert("successfully posted 😀");
-    return true;
-  }
-  else {
-    alert("post unsuccessfull, something went wrong 😐");
-    return false;
-  }
-
-}
 
 
 function Share(props) {
   const [image, setImage] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
   const [upload, setUpload] = useState(false);
-  const [filename, setFilename] = useState("");
-  const [uploadButton, setuploadButton] = useState(false);
   const [user, setuser] = useState(null);
   const themeProvided = useTheme();
   // Rich text editor
   const [content, setContent] = useState("");
   // 
 
+ // ********************** Query Hooks ************************** //
+  const queryClient = useQueryClient();
+  const queryPost = useMutation({
+    mutationFn: createPost,
+    onSuccess: () => {
+      queryClient.invalidateQueries({queryKey: ["allPost"]});
+      queryClient.invalidateQueries({queryKey: ['userpost', JSON.parse(localStorage.getItem("user"))._id ]});
+      setContent("");
+      setImage(null);
+      alert("Upload Successfull 😄");
+    },
 
+    onError: (err) => {
+      alert("[UPLOAD FAILED]: ", err);
+    }
+  })
+
+  // ********************** END *************************** //
 
 
   useEffect(() => {
@@ -148,36 +107,17 @@ function Share(props) {
 
 
   // Create Post
-  const handlePost = async () => {
+  const handlePost = () => {
+    // console.log(content, image);
     // Regular exp to check the content is not containing any whitesspaces/new line chars/empty strings
-    if ((/^[\s\n]*$/.test(content)) && filename === "")
+    if ((/^[\s\n]*$/.test(content)) && image === null)
       return;
 
-    await createPost(content, filename);
-    setImage(null);
-    setUpload(false);
-    setContent("");
-    props.setData([]);
-
+    queryPost.mutate({image: image?.file, desc: content});
   }
   // 
 
-  // Ulpoad a file
-  const handleUpload = async (e) => {
-
-    alert("Hang tight, your file is uploading to the server 🥱")
-    setuploadButton(true);
-    const res = await uploadFile(image?.file);
-    // console.log(res);
-
-    if (res) {
-      setUpload(false);
-      setuploadButton(false);
-      setFilename(res?.downloadURL);
-    }
-
-  }
-  // 
+  
 
 
   // Delete a file
@@ -200,13 +140,13 @@ function Share(props) {
           {/* Text Editor */}
           {/* <TextField onChange={(e) => {console.log(e.target.value); setCaption(e.target.value)}} value={caption} size='small' sx={{ width: { xs: "100%" }, textTransform: "none" }} inputProps={{autoCorrect: 'off'}} fullWidth multiline placeholder='Share a post'></TextField> */}
           <div className='w-full'>
-            
+
             <MDEditor
               value={content}
               onChange={setContent}
-              style={{height: 50}}
+              style={{ height: 50 }}
             />
-            
+
           </div>
 
         </div>
@@ -228,13 +168,13 @@ function Share(props) {
             </Button> :
               <div className='flex'>
 
-                {upload && <Button disabled={uploadButton} onClick={handleUpload} size='large' color='success' startIcon={<CloudUploadIcon />}>
+                {/* {upload && <Button disabled={uploadButton} onClick={handleUpload} size='large' color='success' startIcon={<CloudUploadIcon />}>
                   <p className='font-bold text-[13px]  hidden sm:block'>Upload</p>
-                </Button>}
+                </Button>} */}
 
-                <Button onClick={handleDelete} size='large' color='error' startIcon={<DeleteForeverIcon />}>
+                {!queryPost.isPending && <Button onClick={handleDelete} size='large' color='error' startIcon={<DeleteForeverIcon />}>
                   <p className='font-bold text-[13px]  hidden sm:block'>Delete</p>
-                </Button>
+                </Button>}
               </div>
             }
 
@@ -271,9 +211,17 @@ function Share(props) {
 
 
           <div className='p-2'>
-            <Button disabled={upload ? true : false} onClick={handlePost} size='medium' variant='contained' startIcon={<SendIcon />}>
-              <p className='font-bold text-[13px]'>Post</p>
-            </Button>
+            
+            <LoadingButton
+              loading = {queryPost.isPending}
+              onClick={handlePost}
+              loadingPosition="start"
+              startIcon={<SendIcon />}
+              variant="outlined"
+              
+            >
+              {queryPost.isPending ? "wait" : "post"}
+            </LoadingButton>
           </div>
 
         </div>

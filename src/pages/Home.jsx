@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { Suspense, useEffect, useState } from 'react'
 import Navbar from '../components/Navbar'
 import Sidebar from '../components/Sidebar'
 import Feed from '../components/Feed'
@@ -16,7 +16,7 @@ function Home({ user }) {
   const [theme, setTheme] = useState("light");
   // const theme = useTheme();
 
-  console.log(theme);
+  // console.log(theme);
   useEffect(() => {
     setTheme(JSON.parse(localStorage.getItem("theme")));
   }, [theme])

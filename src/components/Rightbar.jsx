@@ -2,22 +2,24 @@ import { Avatar, Badge, Box, Button, Divider, IconButton, Paper } from '@mui/mat
 import React, { useEffect, useState } from 'react'
 import { PUBLIC_URL } from '../PUBLIC_URL';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getAllUsers, getUser } from '../utils/api';
 
-// Get all users
-async function getAllUsers(userID) {
+// // Get all users
+// async function getAllUsers(userID) {
 
-    const endpoint = `${PUBLIC_URL}/user?_id=` + userID;
+//     const endpoint = `${PUBLIC_URL}/user?_id=` + userID;
 
-    let res = await fetch(endpoint, {
-        method: "GET",
-        headers: {
-            'Content-type': 'application/json'
-        }
-    });
+//     let res = await fetch(endpoint, {
+//         method: "GET",
+//         headers: {
+//             'Content-type': 'application/json'
+//         }
+//     });
 
-    res = await res.json();
-    return res;
-}
+//     res = await res.json();
+//     return res;
+// }
 
 // Follow/Unfollow a user
 async function followUser(ID) {
@@ -42,52 +44,66 @@ async function followUser(ID) {
 }
 
 
-// Get perticular user.
-async function getUser(ID) {
-    const endpoint = `${PUBLIC_URL}/user/` + ID;
+// // Get perticular user.
+// async function getUser(ID) {
+//     const endpoint = `${PUBLIC_URL}/user/` + ID;
 
-    console.log("getUser ID: ", ID);
-    let res = await fetch(endpoint, {
-        method: "GET",
-        headers: {
-            'Content-type': 'application/json'
-        }
-    });
-    // console.log("response: ", res);
+//     console.log("getUser ID: ", ID);
+//     let res = await fetch(endpoint, {
+//         method: "GET",
+//         headers: {
+//             'Content-type': 'application/json'
+//         }
+//     });
+//     // console.log("response: ", res);
 
-    if (res.status === 404 || res.status == 505) {
-        alert("User not exits 🚫 or Server error 💀");
-        return;
-    }
-    res = await res.json();
-    return res;
-}
+//     if (res.status === 404 || res.status == 505) {
+//         alert("User not exits 🚫 or Server error 💀");
+//         return;
+//     }
+//     res = await res.json();
+//     return res;
+// }
 
 
 
 function Rightbar() {
-    const [user, setuser] = useState(null);
-    const [allusers, setAllusers] = useState([]);
     const navigate = useNavigate();
 
 
     // console.log(user);
 
-    useEffect(() => {
-        const data = JSON.parse(localStorage.getItem("user"));
-
-        if (!user) {
-            getUser(data?._id)
-            .then(currUser => setuser(currUser))
-            .catch(err => console.log(err));
+    const queryClient = useQueryClient();
+    const queryAllUser = useQuery({
+        queryKey: ['alluser'],
+        queryFn: async () => {
+            return await getAllUsers(JSON.parse(localStorage.getItem("user"))._id);
         }
+    })
 
-        if (user) {
-            getAllUsers(user?._id)
-                .then(users => setAllusers(users))
-                .catch(err => console.log(err));
+    const queryCurrUser = useQuery({
+        queryKey: ['curruser'],
+        queryFn: async () => {
+            return await getUser({ ID: JSON.parse(localStorage.getItem("user"))._id });
         }
-    }, [user])
+    })
+
+
+    // console.log(queryCurrUser);
+
+    // useEffect(() => {
+    //     const data = JSON.parse(localStorage.getItem("user"));
+
+    //     if (!user) {
+    //         setuser(data)
+    //     }
+
+    //     if (user) {
+    //         getAllUsers(user?._id)['curruser']
+    //             .then(users => setAllusers(users))
+    //             .catch(err => console.log(err));
+    //     }
+    // }, [user])
 
 
     //Handle profile view
@@ -100,7 +116,10 @@ function Rightbar() {
     // Handle follow/unfollow friend
     const handleFollowUser = async (userID) => {
         await followUser(userID);
-        setuser(null);
+        queryClient.invalidateQueries({ queryKey: ['alluser'] });
+        queryClient.invalidateQueries({ queryKey: ['curruser'] });
+        queryClient.invalidateQueries({ queryKey: ['user'] });
+        queryClient.invalidateQueries({ queryKey: [`userfriend`] });
 
     }
 
@@ -114,9 +133,9 @@ function Rightbar() {
 
                 {/* Peoples */}
                 {
-                    allusers.map((item, ind) => {
+                    queryAllUser.isSuccess && queryAllUser.data.data.map((item, ind) => {
                         // console.log(`${item.username}: ${item.followings}`);
-                        if (!(user?.followings.includes(item?._id)) && item?._id !== user?._id) {
+                        if (queryCurrUser.isSuccess && !(queryCurrUser.data.data.followings.includes(item?._id)) && item?._id !== queryCurrUser.data.data._id) {
 
                             return <div className='mb-1' key={ind}>
                                 <div className='flex justify-between items-center'>
@@ -129,7 +148,7 @@ function Rightbar() {
 
                                     <div className='flex space-x-2'>
                                         <Button onClick={() => handleFollowUser(item?._id)} variant='contained' size='small' sx={{ width: 75, height: 30 }}>Follow</Button>
-                                        <Button variant='contained' size='small' sx={{ width: 75, height: 30 }} color='secondary'>Dismiss</Button>
+                                        {/* <Button variant='contained' size='small' sx={{ width: 75, height: 30 }} color='secondary'>Dismiss</Button> */}
                                     </div>
                                 </div>
                             </div>

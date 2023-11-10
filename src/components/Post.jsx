@@ -18,6 +18,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 
 import ProfilePic from '../assets/avatar-1577909_1280.webp'
+import { Image } from 'antd';
 
 import { Box, Button, Checkbox, Divider, Menu, MenuItem, Modal, TextField } from '@mui/material';
 import Comment from './Comment';
@@ -25,6 +26,8 @@ import { PUBLIC_URL } from '../PUBLIC_URL';
 import { useNavigate } from 'react-router-dom';
 
 import MDEditor from '@uiw/react-md-editor';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { deletePost, getSinglePost, makeComment } from '../utils/api';
 
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -38,36 +41,9 @@ const ExpandMore = styled((props) => {
 }));
 
 
-async function makeComment(text, id) {
-  const user = JSON.parse(localStorage.getItem("user"));
-  const endpoint = `${PUBLIC_URL}/post/${id}/comment`;
-  const payload = {
-    userID: user?._id,
-    text: text,
-    username: user?.username
-  }
-
-  const res = await fetch(endpoint, {
-    method: "PUT",
-    headers: {
-      'Content-type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
-
-  // console.log(res);
-
-  if (res.ok) {
-    alert("commented successfully!");
-  }
-  else {
-    alert("something went wrong!");
-  }
 
 
-}
-
-async function likepost(postID){
+async function likepost(postID) {
   const user = JSON.parse(localStorage.getItem("user"));
   const endpoint = `${PUBLIC_URL}/post/${postID}/like`;
   const payload = {
@@ -83,51 +59,51 @@ async function likepost(postID){
     body: JSON.stringify(payload)
   });
 
-  if(res.ok){
+  if (res.ok) {
     res = await res.json()
     // console.log(res.status);
   }
-  else{
+  else {
     alert(res.statusText);
   }
 }
 
 
-async function deletePost(postID) {
-  const user = JSON.parse(localStorage.getItem("user"));
-  const endpoint = `${PUBLIC_URL}/post/${user?._id}`;
+// async function deletePost(postID) {
+//   const user = JSON.parse(localStorage.getItem("user"));
+//   const endpoint = `${PUBLIC_URL}/post/${user?._id}`;
 
-  const payload = {
-    userID: user?._id,
-    postID: postID
-  }
+//   const payload = {
+//     userID: user?._id,
+//     postID: postID
+//   }
 
-  // console.log(payload);
+//   // console.log(payload);
 
-  let res = await fetch(endpoint, {
-    method: "DELETE",
-    headers: {
-      'Content-type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
+//   let res = await fetch(endpoint, {
+//     method: "DELETE",
+//     headers: {
+//       'Content-type': 'application/json'
+//     },
+//     body: JSON.stringify(payload)
+//   });
 
-  if (res.ok)
-    alert("Post deleted!");
-  else if(res.status === 403)
-    alert("You cannot delete the post!");
-  else
-    alert(res.statusText);
+//   if (res.ok)
+//     alert("Post deleted!");
+//   else if(res.status === 403)
+//     alert("You cannot delete the post!");
+//   else
+//     alert(res.statusText);
 
-  // console.log(res);
+//   // console.log(res);
 
-}
+// }
 
 
-function postCreatedate(t){
+function postCreatedate(t) {
   let date = new Date(t);
   let d = date.toDateString();
-  d = [d.split(" ").slice(1,3).join(" "), d.split(" ").slice(3).join(" ")].join(", ")
+  d = [d.split(" ").slice(1, 3).join(" "), d.split(" ").slice(3).join(" ")].join(", ")
   return d;
 }
 
@@ -156,24 +132,65 @@ function Post(props) {
   const navigate = useNavigate();
 
 
-  useEffect(()=>{
+  // ********************** Query Hooks ************************** //
+  const queryClient = useQueryClient();
+  const queryComment = useMutation({
+    mutationFn: makeComment,
+    onSuccess: (response) => {
+      // console.log(response);
+      queryClient.invalidateQueries({ queryKey: ["allPost"] });
+      queryClient.invalidateQueries({ queryKey: ['userpost'] });
+      // queryClient.setQueriesData('allPost', (oldQueryData) => {
+      //   return {
+      //     ...oldQueryData,
+      //     data: oldQueryData.data.map((item) => {
+
+      //       if(item._id === response._id)
+      //         return response;
+      //       else
+      //         return item;
+
+      //     })
+      //   }
+      // })
+    },
+    onError: (err) => {
+      alert("[COMMENT]:", err);
+    }
+  })
+
+
+  const queryDeletePost = useMutation({
+    mutationFn: deletePost,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["allPost"] });
+      queryClient.invalidateQueries({ queryKey: ['userpost'] });
+    },
+    onError: (err) => {
+      alert("[DELETE POST]:", err);
+    }
+  })
+
+  // ********************** END *************************** //
+
+
+
+  useEffect(() => {
     const storage = JSON.parse(localStorage.getItem("user"));
-    if(!user)
+    if (!user)
       setUser(storage);
 
-    if(user){
-      // console.log(props.data?.like);
-      // console.log(user?._id);
-      if(props.data?.like.includes(user?._id))
+    if (user) {
+      if (props.data?.like.includes(storage?._id))
         setLiked(true);
     }
-    
+
   }, [user])
 
   // Set default like for current user.
-  
-  
- 
+
+
+
   // For delete confirm modal
   const [openDeleteModal, setOpenDeleteModal] = React.useState(false);
   const handleOpenDeleteModal = () => setOpenDeleteModal(true);
@@ -193,30 +210,33 @@ function Post(props) {
   };
 
   //Make comment to the post. 
-  const handleComment = async () => {
-    // console.log(value);
+  const handleComment = () => {
     if (value === "")
       return;
 
+    queryComment.mutate({ text: value, id: props.data?._id });
     setValue("");
-    await makeComment(value, props.data?._id);
-    props.setData([]);
+
   }
 
   // Handle like and dislike post
-  const handleLikePost = async(e) => {
+  const handleLikePost = async (e) => {
     // console.log(e.target.checked);
-    if(e.target.checked){
+    if (e.target.checked) {
 
       await likepost(props.data?._id);
       setTotalLikes(prev => prev + 1);
       setLiked(true);
+      queryClient.invalidateQueries({ queryKey: ["allPost"] });
+      queryClient.invalidateQueries({ queryKey: ['userpost'] });
     }
-    else{
+    else {
 
       await likepost(props.data?._id);
       setTotalLikes(prev => prev - 1);
       setLiked(false);
+      queryClient.invalidateQueries({ queryKey: ["allPost"] });
+      queryClient.invalidateQueries({ queryKey: ['userpost'] });
     }
   }
   // 
@@ -230,9 +250,10 @@ function Post(props) {
 
   const confirmDelete = async () => {
     handleCloseModal();
-    await deletePost(props.data?._id);
-    props.setData([]);
-    
+    // await deletePost(props.data?._id);
+    queryDeletePost.mutate({ postID: props.data?._id })
+    // props.setData([]);
+
   }
   //
 
@@ -240,12 +261,12 @@ function Post(props) {
   const handleProfileView = () => {
     handleClose();
     navigate(`/profile/${props.data?.userID}`);
-  } 
+  }
   // 
 
   return (
     <Card sx={{ maxWidth: "100%", marginBottom: 10 }} bgcolor={"background.default"} color={"text.primary"}>
-      <CardHeader 
+      <CardHeader
         avatar={
           <IconButton onClick={handleProfileView}>
             <Avatar src={props.data?.profilePicture} sx={{ bgcolor: red[500], cursor: "pointer" }} aria-label="recipe">
@@ -284,22 +305,26 @@ function Post(props) {
         <MenuItem onClick={handleProfileView}>Profile</MenuItem>
       </Menu>
 
-      {props.data?.image !== "" && <CardMedia
+      {/* {props.data?.image !== "" && <CardMedia
         component="img"
         sx={{ width: "100%", height: 450, objectFit: "cover", p: 1 }}
 
         image={props.data?.image}
         alt="Image"
-      />}
+      />} */}
+
+      <div className='flex justify-center'>
+        {props.data?.image && <Image src={props.data?.image} style={{ objectFit: "cover" }} height={500} width={"100%"} />}
+      </div>
 
       {/* Card content */}
-      <CardContent sx={{textTransform: "none", maxWidth: "100%", p: 1}}>
-        
+      <CardContent sx={{ textTransform: "none", maxWidth: "100%", p: 1 }}>
+
         {/* Markdown viewer */}
         <div className='w-full'>
-          <MDEditor.Markdown  source={props.data?.desc} style={{ width: "100%"}} />
+          <MDEditor.Markdown source={props.data?.desc} style={{ width: "100%" }} />
         </div>
-        
+
       </CardContent>
 
       {/* Like/share/comment */}
@@ -352,7 +377,15 @@ function Post(props) {
           {/* All comments */}
           <Box>
             {props.data?.comment.map((item, ind) => {
-              return <Comment key={ind} refreshUser={props.setData} postID={props.data?._id} commentID = {item.commentID} username={item.username} text={item.text} userID = {item.userID} />
+    
+              return <Comment key={ind}
+                postID={props.data?._id}
+                commentID={item.commentID}
+                username={item.username}
+                text={item.text}
+                userID={item.userID}
+                commentTime={item.time}
+                />
             })}
 
           </Box>
@@ -373,7 +406,7 @@ function Post(props) {
             Are you sure ?
           </Typography>
           <Typography id="modal-modal-description" sx={{ mt: 2 }}>
-          Selecting 'OK' will result in the permanent deletion of the post, while choosing 'Cancel' will abort the process.
+            Selecting 'OK' will result in the permanent deletion of the post, while choosing 'Cancel' will abort the process.
           </Typography>
 
           <div className='float-right'>

@@ -11,6 +11,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import { PUBLIC_URL } from '../PUBLIC_URL';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 // ALl friends of the user
 async function getAllFriends(ID) {
@@ -34,10 +35,11 @@ async function getAllFriends(ID) {
 
 function UserTab(props) {
     const [value, setValue] = useState('1');
-    const [friends, setFriends] = useState([]);
     const navigate = useNavigate();
 
-    console.log(props.friends?.followers);
+    const queryClient = useQueryClient();
+
+    // console.log(props.friends?.followers);
 
     
 
@@ -49,6 +51,7 @@ function UserTab(props) {
 
      //Handle profile view
      const handleProfileView = (userID) => {
+        queryClient.invalidateQueries({queryKey: ['user']});
         navigate(`/profile/${userID}`);
     }
     //
