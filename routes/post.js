@@ -291,6 +291,27 @@ route.put("/:id/comment", async (req, res) => {
     }
 })
 
+// Edit a comment in a post
+route.put("/:id/comment/edit", async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (post) {
+            await Post.findByIdAndUpdate(
+                req.params.id,
+                { $set: { 'comment.$[elem].text': req.body.text } }, // Using arrayFilters to specify the commentID
+                { arrayFilters: [{ 'elem.commentID': req.body.commentID }] }
+            );
+
+            res.status(201).json({ post });
+        }
+        else{
+            res.status(404).json({ status: "Post not found!" });
+        }
+    } catch (err) {
+        res.status(500).json({ status: "server error", err });
+    }
+})
+
 
 
 // Delete comment from a post
@@ -303,7 +324,7 @@ route.delete("/:id/comment", async (req, res) => {
                 await Post.findByIdAndUpdate(req.params.id, {
                     $pull: { comment: { commentID: req.body.commentID } }
                 })
-                res.status(201).json({ status: `Sucessfully deleted postID ${req.params.id}`});
+                res.status(201).json({ status: `Sucessfully deleted postID ${req.params.id}` });
 
             } catch {
                 res.status(500).json({ status: "server error", err });
