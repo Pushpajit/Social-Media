@@ -1,9 +1,11 @@
-import { Avatar, Box, IconButton, Menu, MenuItem, Typography } from '@mui/material'
+import { Avatar, Box, IconButton, InputBase, Menu, MenuItem, Typography } from '@mui/material'
 import MoreVertIcon from '@mui/icons-material/MoreVert';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import React, { useEffect, useState } from 'react'
 import { PUBLIC_URL } from '../PUBLIC_URL';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { deleteComment, getUser } from '../utils/api';
+import { deleteComment, editComment, getUser } from '../utils/api';
 
 
 // Get the timestamp of the post (replace this with your actual timestamp)
@@ -42,6 +44,8 @@ function timeAgo(postTimestamp) {
 
 function Comment(props) {
     const [anchorEl, setAnchorEl] = React.useState(null);
+    const [edittext, setEdittext] = useState(props?.text);
+    const [openEdit, setOpenEdit] = useState(false);
 
     const open = Boolean(anchorEl);
     const handleClick = (event) => {
@@ -62,7 +66,7 @@ function Comment(props) {
             return await getUser({ ID: props.userID });
         }
     })
-    const query = useMutation({
+    const queryDelete = useMutation({
         mutationFn: deleteComment,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['allPost'] });
@@ -74,13 +78,37 @@ function Comment(props) {
         }
     })
 
+    const queryEdit = useMutation({
+        mutationFn: editComment,
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['allPost'] });
+            queryClient.invalidateQueries({ queryKey: ['userpost'] });
+            
+        },
+        onError: (err) => {
+            console.log("[COMMENT]: ", err);
+            alert("[COMMENT]: NOT EDITED 😢");
+        }
+    })
+
     // ********************** END *************************** //
 
 
     // handle delete comment
     const handleDelete = () => {
         handleClose();
-        query.mutate({ postID: props.postID, commentID: props.commentID });
+        queryDelete.mutate({ postID: props.postID, commentID: props.commentID });
+    }
+
+    // handle edit comment
+    const handleEditChange = (e) => {
+        setEdittext(e.target.value);
+    }
+
+    // handle the edit request
+    const handleEdit = (e) => {
+        setOpenEdit(false);
+        queryEdit.mutate({ postID: props.postID, commentID: props.commentID, text: edittext });
     }
 
     return (
@@ -117,16 +145,43 @@ function Comment(props) {
                         horizontal: 'right',
                     }}
                 >
-                    {JSON.parse(localStorage.getItem("user"))._id === props.userID && <MenuItem >Edit</MenuItem>}
+                    {JSON.parse(localStorage.getItem("user"))._id === props.userID && <MenuItem onClick={(e) => { setOpenEdit(true); handleClose(); }} >Edit</MenuItem>}
                     {JSON.parse(localStorage.getItem("user"))._id === props.userID && <MenuItem onClick={handleDelete} >Delete</MenuItem>}
                     <MenuItem onClick={handleClose}>Report</MenuItem>
                 </Menu>
             </Box>
 
+            <div className={`${!openEdit ? 'block' : 'hidden'}`}>
+                <Typography variant="body2" color="text.primary" sx={{ paddingLeft: 8, paddingRight: 2 }}>
+                    {props?.text}
+                </Typography>
+            </div>
 
-            <Typography variant="body2" color="text.primary" sx={{ paddingLeft: 8, paddingRight: 2 }}>
-                {props?.text}
-            </Typography>
+
+            {/* Custom inline edit field */}
+            <div className={`${openEdit ? 'flex' : 'hidden'} gap-2`}>
+                <InputBase
+                    value={edittext}
+                    onChange={handleEditChange}
+                    sx={{
+                        border: "1px dashed",
+                        borderRadius: 2, marginLeft: 6, paddingRight: 2, paddingLeft: 2,
+
+                    }}
+
+                >
+                </InputBase>
+
+                <div>
+                    <IconButton onClick= { handleEdit }  size='small' color='success' >
+                        <CheckIcon />
+                    </IconButton>
+
+                    <IconButton onClick={(e) => { setOpenEdit(false); setEdittext(props.text) }} size='small' color='error' >
+                        <CloseIcon />
+                    </IconButton>
+                </div>
+            </div>
         </Box>
     )
 }

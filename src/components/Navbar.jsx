@@ -142,7 +142,8 @@ function Appbar({ toggleDrawer }) {
 
         {/* Menu for profile settings menu */}
         <Menu
-          sx={{ mt: '45px' }}
+         
+          sx={{ mt: '45px'}}
           id="menu-appbar"
           anchorEl={anchorElUser}
           anchorOrigin={{

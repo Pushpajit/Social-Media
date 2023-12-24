@@ -27,7 +27,7 @@ import { useNavigate } from 'react-router-dom';
 
 import MDEditor from '@uiw/react-md-editor';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { deletePost, getSinglePost, makeComment } from '../utils/api';
+import { deletePost, getSinglePost, likepost, makeComment } from '../utils/api';
 
 const ExpandMore = styled((props) => {
   const { expand, ...other } = props;
@@ -43,30 +43,30 @@ const ExpandMore = styled((props) => {
 
 
 
-async function likepost(postID) {
-  const user = JSON.parse(localStorage.getItem("user"));
-  const endpoint = `${PUBLIC_URL}/post/${postID}/like`;
-  const payload = {
-    userID: user?._id,
-  }
+// async function likepost(postID) {
+//   const user = JSON.parse(localStorage.getItem("user"));
+//   const endpoint = `${PUBLIC_URL}/post/${postID}/like`;
+//   const payload = {
+//     userID: user?._id,
+//   }
 
-  let res = await fetch(endpoint, {
-    method: "PUT",
-    headers: {
-      'Content-type': 'application/json'
-    },
+//   let res = await fetch(endpoint, {
+//     method: "PUT",
+//     headers: {
+//       'Content-type': 'application/json'
+//     },
 
-    body: JSON.stringify(payload)
-  });
+//     body: JSON.stringify(payload)
+//   });
 
-  if (res.ok) {
-    res = await res.json()
-    // console.log(res.status);
-  }
-  else {
-    alert(res.statusText);
-  }
-}
+//   if (res.ok) {
+//     res = await res.json()
+//     // console.log(res.status);
+//   }
+//   else {
+//     alert(res.statusText);
+//   }
+// }
 
 
 // async function deletePost(postID) {
@@ -128,7 +128,7 @@ function Post(props) {
   const [value, setValue] = useState("");
   const [user, setUser] = useState(null);
   const [totalLikes, setTotalLikes] = useState(props.data?.like.length);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(props.data?.like.includes(JSON.parse(localStorage.getItem("user"))?._id));
   const navigate = useNavigate();
 
 
@@ -171,23 +171,30 @@ function Post(props) {
     }
   })
 
+  const queryLikePost = useMutation({
+    mutationFn: likepost,
+    onSuccess: (res) => {
+      // console.log(res);
+      if (res.data.status === 'Post has been liked!') {
+        setTotalLikes(prev => prev + 1);
+        setLiked(true);
+        
+      } else {
+        setTotalLikes(prev => prev - 1);
+        setLiked(false);
+      }
+
+      queryClient.invalidateQueries({ queryKey: ["allPost"] });
+      queryClient.invalidateQueries({ queryKey: ["userpost"] });
+    },
+    onError: (err) => {
+      alert("[LIKEERROR]: ", err);
+    }
+  })
+
   // ********************** END *************************** //
 
 
-
-  useEffect(() => {
-    const storage = JSON.parse(localStorage.getItem("user"));
-    if (!user)
-      setUser(storage);
-
-    if (user) {
-      if (props.data?.like.includes(storage?._id))
-        setLiked(true);
-    }
-
-  }, [user])
-
-  // Set default like for current user.
 
 
 
@@ -221,23 +228,8 @@ function Post(props) {
 
   // Handle like and dislike post
   const handleLikePost = async (e) => {
-    // console.log(e.target.checked);
-    if (e.target.checked) {
-
-      await likepost(props.data?._id);
-      setTotalLikes(prev => prev + 1);
-      setLiked(true);
-      queryClient.invalidateQueries({ queryKey: ["allPost"] });
-      queryClient.invalidateQueries({ queryKey: ['userpost'] });
-    }
-    else {
-
-      await likepost(props.data?._id);
-      setTotalLikes(prev => prev - 1);
-      setLiked(false);
-      queryClient.invalidateQueries({ queryKey: ["allPost"] });
-      queryClient.invalidateQueries({ queryKey: ['userpost'] });
-    }
+    queryLikePost.mutate({ postID: props.data?._id });
+      
   }
   // 
 
@@ -250,9 +242,7 @@ function Post(props) {
 
   const confirmDelete = async () => {
     handleCloseModal();
-    // await deletePost(props.data?._id);
     queryDeletePost.mutate({ postID: props.data?._id })
-    // props.setData([]);
 
   }
   //
@@ -263,6 +253,7 @@ function Post(props) {
     navigate(`/profile/${props.data?.userID}`);
   }
   // 
+
 
   return (
     <Card sx={{ maxWidth: "100%", marginBottom: 10 }} bgcolor={"background.default"} color={"text.primary"}>
@@ -299,19 +290,12 @@ function Post(props) {
           horizontal: 'right',
         }}
       >
-        {user?._id === props.data?.userID && <MenuItem onClick={handleClose}>Edit</MenuItem>}
-        {user?._id === props.data?.userID && <MenuItem onClick={handleDeletePost}>Delete</MenuItem>}
+        {JSON.parse(localStorage.getItem("user"))?._id === props.data?.userID && <MenuItem onClick={handleClose}>Edit</MenuItem>}
+        {JSON.parse(localStorage.getItem("user"))?._id === props.data?.userID && <MenuItem onClick={handleDeletePost}>Delete</MenuItem>}
         <MenuItem onClick={handleClose}>Report</MenuItem>
         <MenuItem onClick={handleProfileView}>Profile</MenuItem>
       </Menu>
 
-      {/* {props.data?.image !== "" && <CardMedia
-        component="img"
-        sx={{ width: "100%", height: 450, objectFit: "cover", p: 1 }}
-
-        image={props.data?.image}
-        alt="Image"
-      />} */}
 
       <div className='flex justify-center'>
         {props.data?.image && props.data.image !== '' && <Image src={props.data?.image} style={{ objectFit: "cover" }} height={500} width={"100%"} />}
@@ -361,7 +345,7 @@ function Post(props) {
           <Box sx={{ display: 'flex', justifyContent: "space-between", alignContent: "center", gap: { xs: 2, md: 0 }, marginBottom: 5 }}>
 
             {/* Set dynamic profile pic*/}
-            <Avatar src={user?.profilePicture || ProfilePic} sx={{ bgcolor: "crimson", cursor: "pointer" }}>
+            <Avatar src={JSON.parse(localStorage.getItem("user"))?.profilePicture || ProfilePic} sx={{ bgcolor: "crimson", cursor: "pointer" }}>
 
             </Avatar>
 
@@ -377,15 +361,16 @@ function Post(props) {
           {/* All comments */}
           <Box>
             {props.data?.comment.map((item, ind) => {
-    
-              return <Comment key={ind}
+
+              return <Comment 
+                key={ind}
                 postID={props.data?._id}
                 commentID={item.commentID}
                 username={item.username}
                 text={item.text}
                 userID={item.userID}
                 commentTime={item.time}
-                />
+              />
             })}
 
           </Box>

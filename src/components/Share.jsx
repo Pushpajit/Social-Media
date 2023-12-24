@@ -1,4 +1,4 @@
-import { Alert, Avatar, Button, Divider, Paper, Popover, Snackbar, TextField } from '@mui/material'
+import { Alert, Avatar, Button, Divider, Paper, Popover, Slide, Snackbar, TextField } from '@mui/material'
 import LoadingButton from '@mui/lab/LoadingButton';
 import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
@@ -17,7 +17,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPost } from '../utils/api';
 
 
-
+function TransitionUp(props) {
+  return <Slide {...props} direction="up" />;
+}
 
 
 function Share(props) {
@@ -60,7 +62,7 @@ function Share(props) {
 
   // Trigger file selector.
   function openFileManager(e) {
-    document.getElementById('file1').click();
+    document.getElementById('file3').click();
   }
   // 
 
@@ -180,7 +182,7 @@ function Share(props) {
           <div className='flex sm:gap-5 justify-between sm:ml-16 ml-12 p-2'>
             {!image ? <Button onClick={openFileManager} size='large' color='success' startIcon={<PhotoLibraryIcon />}>
               <p className='font-bold text-[13px]  hidden sm:block'>Image</p>
-              <input className='hidden' type="file" name="file1" id="file1" onChange={onImageChange} />
+              <input className='hidden' type="file" name="file3" id="file3" onChange={onImageChange} />
             </Button> :
               <div className='flex'>
 
@@ -245,9 +247,9 @@ function Share(props) {
       </Paper>
 
       {/* Snakbar after successfull completion */}
-      <Snackbar open={openAlertSuccess} autoHideDuration={6000} onClose={handleCloseSuccess} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-        <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: '100%' }}>
-          Post Uploaded Successfully 🥳🎉
+      <Snackbar open={openAlertSuccess} autoHideDuration={6000} onClose={handleCloseSuccess} TransitionComponent={TransitionUp}>
+        <Alert onClose={handleCloseSuccess} severity='primary' sx={{ width: '100%', bgcolor: '#1976D2', color: "white" }}>
+          A post has been created successfully 🥳🎉
         </Alert>
       </Snackbar>
     </div>

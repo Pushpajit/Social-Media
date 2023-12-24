@@ -45,6 +45,18 @@ export async function makeComment(data) {
 
 }
 
+// To edit the specific comment of a specific post
+export async function editComment(data){
+    const endpoint = `${PUBLIC_URL}/post/${data.postID}/comment/edit`;
+    const payload = {
+        commentID: data.commentID,
+        text: data.text
+    }
+
+    const res = await axios.put(endpoint, payload);
+    return res;
+}
+
 
 
 export async function deleteComment(data) {
@@ -69,7 +81,7 @@ export async function deleteComment(data) {
 // Get all posts of the user.
 export async function getUserPosts(data) {
     // const data = JSON.parse(localStorage.getItem("user"));
-    console.log(data);
+    // console.log(data);
     const endpoint = `${PUBLIC_URL}/post/` + data.ID;
 
     const res = await axios(endpoint);
@@ -222,10 +234,6 @@ export async function updateUserProfile(data) {
     // console.log(payload);
 
     const res = await axios.put(endpoint, payload);
-    console.log(res);
-    if (res.status === 202 || res?.data?.user) {
-        localStorage.setItem("user", JSON.stringify(res?.data.user));
-    }
     return res;
 
 }
@@ -302,4 +310,15 @@ export async function getAllUsers(userID) {
     return res;
 }
 
+// Like/Dislike a post
+export async function likepost(data) {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const endpoint = `${PUBLIC_URL}/post/${data.postID}/like`;
+    const payload = {
+        userID: user?._id,
+    }
+
+    const res = await axios.put(endpoint, payload);
+    return res;
+}
 

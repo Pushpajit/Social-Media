@@ -6,7 +6,7 @@ import SignUp from './pages/SignUp';
 import ProtectedRoute from './pages/ProtectedRoute';
 import SignIn from './pages/Signin';
 import { useEffect, useState } from 'react';
-import { getAllPosts, getUserPosts } from './utils/api';
+
 
 
 

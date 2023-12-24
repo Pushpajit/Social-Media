@@ -30,15 +30,28 @@ const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
+
+function copyAndUpdateValues(obj1, obj2) {
+  for (let key in obj2) {
+      if (obj2.hasOwnProperty(key)) {
+          // Check if the key exists in obj1 before updating
+          if (obj1.hasOwnProperty(key)) {
+              obj1[key] = obj2[key];
+          }
+      }
+  }
+  return obj1;
+}
+
 const styles = {
   iconButton: {
-    bgcolor: 'lime',
+    bgcolor: 'green',
     color: 'white',
     opacity: 0.5, // Initial opacity
     transition: 'opacity 0.3s',
 
     '&:hover': {
-      bgcolor: 'lime', // Change this to the desired hover color
+      bgcolor: 'green', // Change this to the desired hover color
       opacity: 1
     },
   },
@@ -154,8 +167,14 @@ function Profile() {
   // Update DP
   const queryMutateDP = useMutation({
     mutationFn: updateUserProfile,
-    onSuccess: (data) => {
+    onSuccess: (_, variables) => {
+      console.log(variables);
       handleClickSuccess();
+
+      // Update the localstorage also.
+      const local = JSON.parse(localStorage.getItem("user"));
+      const updatedData = copyAndUpdateValues(local, variables.updateData)
+      localStorage.setItem("user", JSON.stringify(updatedData));
 
       queryClient.invalidateQueries({ queryKey: [`user`] });
     },
@@ -169,8 +188,14 @@ function Profile() {
   // Update Cover Pic
   const queryMutateCover = useMutation({
     mutationFn: updateUserCover,
-    onSuccess: (data) => {
+    onSuccess: (_, variables) => {
       handleClickSuccess();
+
+       // Update the localstorage also.
+       const local = JSON.parse(localStorage.getItem("user"));
+       const updatedData = copyAndUpdateValues(local, variables.updateData)
+       localStorage.setItem("user", JSON.stringify(updatedData));
+       
       queryClient.invalidateQueries({ queryKey: [`user`] });
     },
 
@@ -226,8 +251,6 @@ function Profile() {
     }
   }
   // 
-
-  console.log(profileIMG, coverIMG);
 
 
 
@@ -318,12 +341,14 @@ function Profile() {
                 />
                 <div className='absolute right-0 bottom-0 text-slate-600 text-3xl transform -translate-x-[-50%] cursor-pointer'>
                   {/* Your update picture button goes here */}
-                  {(!profileIMG && !coverIMG) ? <IconButton size='small' sx={styles.iconButton} onClick={handleClickOpenDialouge}>
+                  {(!profileIMG && !coverIMG) && queryUser.isSuccess && queryUser.data.data._id === (JSON.parse(localStorage.getItem("user"))._id)   
+                  ? 
+                  <IconButton size='small' sx={styles.iconButton} onClick={handleClickOpenDialouge}>
                     <CameraAltIcon />
                   </IconButton> :
-                    <IconButton size='small' sx={styles.iconButtonCancle} onClick={handleOpenUploadModal}>
+                    (queryUser.isSuccess && queryUser.data.data._id === (JSON.parse(localStorage.getItem("user"))._id) && <IconButton size='small' sx={styles.iconButtonCancle} onClick={handleOpenUploadModal}>
                       <CloudSyncIcon />
-                    </IconButton>
+                    </IconButton>)
                   }
 
                   {/* Hidden File Manager */}
@@ -460,7 +485,7 @@ function Profile() {
           </Typography>
 
           <div className='float-right'>
-            <Button onClick={handleCloseModal} size='small'>cancle</Button>
+            <Button onClick={handleCloseModal} size='small'>reset</Button>
             <Button onClick={confirmUpdate} size='small'>ok</Button>
           </div>
         </Box>

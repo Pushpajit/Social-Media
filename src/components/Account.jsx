@@ -5,6 +5,7 @@ import {
     Modal,
     Radio,
     RadioGroup,
+    Slide,
     Snackbar,
     TextField
 } from '@mui/material';
@@ -38,6 +39,24 @@ const style = {
     p: 2,
 
 };
+
+function TransitionUp(props) {
+    return <Slide {...props} direction="up" />;
+}
+
+
+function copyAndUpdateValues(obj1, obj2) {
+    for (let key in obj2) {
+        if (obj2.hasOwnProperty(key)) {
+            // Check if the key exists in obj1 before updating
+            if (obj1.hasOwnProperty(key)) {
+                obj1[key] = obj2[key];
+            }
+        }
+    }
+    return obj1;
+}
+
 
 function Account(props) {
 
@@ -99,8 +118,14 @@ function Account(props) {
     const queryClient = useQueryClient();
     const queryUpdate = useMutation({
         mutationFn: updateUser,
-        onSuccess: () => {
-            // alert("Profile updated 😀");
+        onSuccess: (_, variables) => {
+            // console.log(variables.updateData);
+            
+            // Update the localstorage also.
+            const local = JSON.parse(localStorage.getItem("user"));
+            const updatedData = copyAndUpdateValues(local, variables.updateData)
+            localStorage.setItem("user", JSON.stringify(updatedData));
+
             handleClickSuccess();
             queryClient.invalidateQueries({ queryKey: ["user"] });
         },
@@ -193,9 +218,9 @@ function Account(props) {
                 </Box>
             </Modal>
 
-            <Snackbar open={openAlertSuccess} autoHideDuration={6000} onClose={handleCloseSuccess} anchorOrigin={{ vertical: 'top', horizontal: 'center' }}>
-                <Alert onClose={handleCloseSuccess} severity="success" sx={{ width: '100%' }}>
-                    Profile Updated Successfully 🎉
+            <Snackbar open={openAlertSuccess} autoHideDuration={6000} onClose={handleCloseSuccess} TransitionComponent={TransitionUp} >
+                <Alert onClose={handleCloseSuccess} severity="success" color='primary' sx={{ width: '100%' }}>
+                    Profile updated successfully 🎉
                 </Alert>
             </Snackbar>
 
